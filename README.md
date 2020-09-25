@@ -1,13 +1,13 @@
 # Fairness in Face Matching Algorithms
 Jamal, Aidan, Chidansh, and Ahmed
 
-# Papers:
+## Papers
 | # 	| Paper Title                                 	| Demographic(s) 	| Implementation            	|
 |---	|---------------------------------------------	|----------------	|---------------------------	|
 | 1 	| [Toward Fairness in Face Matching Algorithms](https://wp.comminfo.rutgers.edu/vsingh/wp-content/uploads/sites/110/2019/09/Workshop_paper_CameraReady.pdf) 	| Gender         	| Adversarial deep learning 	|
 
 
-# Data Sets
+## Data Sets
 | Name      	| Description                                                  	|
 |-----------	|--------------------------------------------------------------	|
 | [CelebA](http://mmlab.ie.cuhk.edu.hk/projects/CelebA.html)    	| 200K celebrity images with 40+ attributes.                   	|
@@ -15,6 +15,6 @@ Jamal, Aidan, Chidansh, and Ahmed
 
 Additional data sets can be found on [Kaggle](https://www.kaggle.com/c/deepfake-detection-challenge/discussion/121594)
 
-# Notes
+## Notes
 - Need to change file paths in code + download the images if you want to run Jamal's code
 - You may have to force push to repo (git push --force origin master)
