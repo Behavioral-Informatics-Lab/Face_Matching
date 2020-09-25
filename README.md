@@ -1,6 +1,12 @@
 # Fairness in Face Matching Algorithms
 Jamal, Aidan, Chidansh, and Ahmed
 
+# Papers:
+| # 	| Paper Title                                 	| Demographic(s) 	| Implementation            	|
+|---	|---------------------------------------------	|----------------	|---------------------------	|
+| 1 	| [Toward Fairness in Face Matching Algorithms](https://wp.comminfo.rutgers.edu/vsingh/wp-content/uploads/sites/110/2019/09/Workshop_paper_CameraReady.pdf) 	| Gender         	| Adversarial deep learning 	|
+
+
 # Data Sets
 | Name      	| Description                                                  	|
 |-----------	|--------------------------------------------------------------	|
