@@ -6,6 +6,14 @@ Jamal, Aidan, Chidansh, and Ahmed
 |---	|---------------------------------------------	|----------------	|---------------------------	|
 | 1 	| [Toward Fairness in Face Matching Algorithms](https://wp.comminfo.rutgers.edu/vsingh/wp-content/uploads/sites/110/2019/09/Workshop_paper_CameraReady.pdf) 	| Gender         	| Adversarial deep learning 	|
 
+## Python Scripts
+| # 	| Title                               	| Contributor(s) 	| Description       	|
+|---	|-------------------------------------	|----------------	|-------------------	|
+| 1 	| main.py                             	| Jamal          	| Training          	|
+| 2 	| main.ipynb                          	| Jamal, Aidan   	| Annotated main.py 	|
+| 3 	| low_high_celeb_adversal_test_all.py 	| Jamal          	| CelebA Testing    	|
+| 4 	| test_main.py                        	| Jamal          	| UMD Faces Testing 	|
+
 ## Data Sets
 | Name      	| Description                                                  	|
 |-----------	|--------------------------------------------------------------	|
