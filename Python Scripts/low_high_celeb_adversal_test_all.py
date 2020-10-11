@@ -24,16 +24,22 @@ from torch.utils.data.sampler import SubsetRandomSampler
 import sklearn.metrics as mt
 
 # additional files is located in /home/jamal/Downloads/additional_files/
-def save_checkpoint(state, filename='/home/jamal/Downloads/additional_files/checkpoint_0.001.pth.tar'):
+# def save_checkpoint(state, filename='/home/jamal/Downloads/additional_files/checkpoint_0.001.pth.tar'):
+def save_checkpoint(state, filename='Checkpoints/checkpoint_0.001.pth.tar'):
     torch.save(state, filename)
-def save_checkpoint_A(state, filename='/home/jamal/Downloads/additional_files/checkpoint_A_0.001.pth.tar'):
+# def save_checkpoint_A(state, filename='/home/jamal/Downloads/additional_files/checkpoint_A_0.001.pth.tar'):
+def save_checkpoint_A(state, filename='Checkpoints/checkpoint_A_0.001.pth.tar'):
     torch.save(state, filename)
     
-file_path ='/home/jamal/Desktop/low high image cnn/list_attr_celeba1_test.txt'
+# file_path ='/home/jamal/Desktop/low high image cnn/list_attr_celeba1_test.txt'
+# images_path = '/home/jamal/Desktop/low high image cnn/celeb_Young/'
 
-images_path = '/home/jamal/Desktop/low high image cnn/celeb_Young/'
+file_path ='Data Sets/list_attr_celeba.txt'
+images_path = 'CelebA/img_align_celeba/'
 
-load_net = 1
+# CHANGE BACK TO 1
+load_net = 0
+
 columns = ['ImgId','5_o_Clock_Shadow', ' Arched_Eyebrows', 'Attractive', 'Bags_Under_Eyes', 'Bald', 'Bangs', 'Big_Lips', 'Big_Nose', 'Black_Hair', 'Blond_Hair', 'Blurry', 'Brown_Hair', 'Bushy_Eyebrows', 'Chubby', 'Double_Chin', 'Eyeglasses', 'Goatee', 'Gray_Hair', 'Heavy_Makeup', 'High_Cheekbones', 'Male', 'Mouth_Slightly_Open', 'Mustache', 'Narrow_Eyes', 'No_Beard', 'Oval_Face', 'Pale_Skin', 'Pointy_Nose', 'Receding_Hairline', 'Rosy_Cheeks', 'Sideburns', 'Smiling', 'Straight_Hair', 'Wavy_Hair', 'Wearing_Earrings', 'Wearing_Hat', 'Wearing_Lipstick', 'Wearing_Necklace', 'Wearing_Necktie', 'Young']
 
 # columns=['SUBJECT_ID','FILE','FACE_X','FACE_Y','FACE_H','FACE_W','PR_MALE','PR_FEMALE']
@@ -175,7 +181,7 @@ class Male_Female_dataset(Dataset):
         col =  cele_attrib[cele_attrib.ImgId==img_n]
 
         
-        t = torch.rand(1);
+        t = torch.rand(1)
         if t > 0.5:
             h = torch.randint(0,len(self),(1,1))
             img2_name = os.path.join(self.root_dir,(self.images_names[h]))
@@ -267,8 +273,12 @@ dataset = Male_Female_dataset(images_path,shape)
 if load_net:
     net = Net().to(device)
     net_A = Net_A().to(device)
-    checkpoint = torch.load('/home/jamal/Downloads/baseline young celeba/checkpoint_baseline_celeb.pth.tar')
-    checkpoint_A = torch.load('/home/jamal/Downloads/baseline young celeba/checkpoint_A_baseline_celeb.pth.tar')
+    # checkpoint = torch.load('/home/jamal/Downloads/baseline young celeba/checkpoint_baseline_celeb.pth.tar')
+    # checkpoint_A = torch.load('/home/jamal/Downloads/baseline young celeba/checkpoint_A_baseline_celeb.pth.tar')
+
+    checkpoint = torch.load('Checkpoints/checkpoint_baseline_celeb.pth.tar')
+    checkpoint_A = torch.load('Checkpoints/checkpoint_A_baseline_celeb.pth.tar')
+
     net.load_state_dict ( checkpoint['state_dict'])
     optimizer = optim.Adam(net.parameters(),lr = 0.001, weight_decay = 0.0005)
     optimizer.load_state_dict = checkpoint['optimizer']
