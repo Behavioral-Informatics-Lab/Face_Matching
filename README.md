@@ -23,8 +23,10 @@ Jamal, Aidan, Chidansh, and Ahmed
 Additional data sets can be found on [Kaggle](https://www.kaggle.com/c/deepfake-detection-challenge/discussion/121594)
 
 ## Resources
-[Variational Fair Autoencoder](https://github.com/dendisuhubdy/vfae/blob/master/vfae.py)
-[A Cloud-guided Feature Extraction Approach for Image Retrieval in Mobile Edge Computing](https://ieeexplore.ieee.org/document/8851250)
+- [Variational Fair Autoencoder](https://github.com/dendisuhubdy/vfae/blob/master/vfae.py)
+- [A Cloud-guided Feature Extraction Approach for Image Retrieval in Mobile Edge Computing](https://ieeexplore.ieee.org/document/8851250)
+- [Pytorch VAE Git Repo](https://github.com/AntixK/PyTorch-VAE)
+
 
 ## Notes
 - Need to change file paths in code + download the images if you want to run Jamal's code
