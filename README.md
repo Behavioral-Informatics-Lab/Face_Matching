@@ -27,6 +27,11 @@ Additional data sets can be found on [Kaggle](https://www.kaggle.com/c/deepfake-
 - [A Cloud-guided Feature Extraction Approach for Image Retrieval in Mobile Edge Computing](https://ieeexplore.ieee.org/document/8851250)
 - [Pytorch VAE Git Repo](https://github.com/AntixK/PyTorch-VAE)
 
+## Use Instructions
+- To clone the repo, enter below snippet into your command line 
+```
+git clone https://github.com/libgit2/libgit2
+```
 
 ## Notes
 - Need to change file paths in code + download the images if you want to run Jamal's code
