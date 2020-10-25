@@ -27,6 +27,7 @@ Additional data sets can be found on [Kaggle](https://www.kaggle.com/c/deepfake-
 - [A Cloud-guided Feature Extraction Approach for Image Retrieval in Mobile Edge Computing](https://ieeexplore.ieee.org/document/8851250)
 - [Pytorch VAE Git Repo](https://github.com/AntixK/PyTorch-VAE)
 
+<<<<<<< HEAD
 ## Repo Use Instructions
 - To clone the repo, enter below snippet into your command line 
 ```
@@ -76,3 +77,14 @@ pip install torch===1.6.0 torchvision===0.7.0 -f https://download.pytorch.org/wh
 ```
 PS C:\Users\austr\Desktop\BIL Face Matching Alg Fairness\Face_Matching> & C:/Users/austr/anaconda3/python.exe "c:/Users/austr/Desktop/BIL Face Matching Alg Fairness/Face_Matching/Paper1Scripts/low_high_celeb_adversal_test_all.py"
 ```
+=======
+## Use Instructions
+- To clone the repo, enter below snippet into your command line 
+```
+git clone https://github.com/libgit2/libgit2
+```
+
+## Notes
+- Need to change file paths in code + download the images if you want to run Jamal's code
+- You may have to force push to repo (git push --force origin master)
+>>>>>>> c471fdf6e0ed6a45d45e35e9ef895f6d8e3d1f0f
