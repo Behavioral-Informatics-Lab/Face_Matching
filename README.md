@@ -32,6 +32,10 @@ Additional data sets can be found on [Kaggle](https://www.kaggle.com/c/deepfake-
 ```
 git clone https://github.com/Behavioral-Informatics-Lab/Face_Matching.git
 ```
+- Remember to pull to avoid version conflicts!
+```
+git pull
+```
 - To push your changes to the git repo, enter the following (or a similar variant) in your command line:
 ```
 git add .
