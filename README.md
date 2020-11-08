@@ -26,6 +26,7 @@ Additional data sets can be found on [Kaggle](https://www.kaggle.com/c/deepfake-
 - [Variational Fair Autoencoder](https://github.com/dendisuhubdy/vfae/blob/master/vfae.py)
 - [A Cloud-guided Feature Extraction Approach for Image Retrieval in Mobile Edge Computing](https://ieeexplore.ieee.org/document/8851250)
 - [Pytorch VAE Git Repo](https://github.com/AntixK/PyTorch-VAE)
+- [Theanos VFAE Git Repo](https://github.com/NCTUMLlab/Huang-Ching-Wei/tree/master/Model)
 
 ## Repo Use Instructions
 - To clone the repo, enter below snippet into your command line 
