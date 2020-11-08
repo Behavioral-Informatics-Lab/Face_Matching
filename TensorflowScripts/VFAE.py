@@ -804,3 +804,21 @@ def VFAE_training(source_data, target_data, n_train_batches, n_epochs, struct, c
     )     
     
     return features_model, test_model, trained_param
+
+
+'''
+file_path ='Data Sets/CelebA/annot/list_attr_celeba.txt'
+images_path = 'Data Sets/CelebA/img_align_celeba/'
+cele_attrib = pd.read_csv(file_path,delimiter = "\s+",names = columns)
+
+'''
+
+VFAE(rng=np.random.RandomState(), 
+    input_source=theano.tensor.matrix(),
+    input_target=theano.tensor.matrix(),
+    label_source=theano.tensor.matrix(),
+    batch_size=200,
+    struct=VFAE_struct(),
+    coef=VFAE_coef(),
+    train = False,
+    init_params=None)
