@@ -25,6 +25,7 @@ Additional data sets can be found on [Kaggle](https://www.kaggle.com/c/deepfake-
 ## Resources
 - [Variational Fair Autoencoder](https://github.com/dendisuhubdy/vfae/blob/master/vfae.py)
 - [A Cloud-guided Feature Extraction Approach for Image Retrieval in Mobile Edge Computing](https://ieeexplore.ieee.org/document/8851250)
+- [HyperFace: A Deep Multi-task Learning Framework for Face Detection, Landmark Localization, Pose Estimation, and Gender Recognition](https://mail.google.com/mail/u/1/#search/jka59%40scarletmail.rutgers.edu/FMfcgxwKjKqxQGstpSCQttXlsGMFDfDx?projector=1&messagePartId=0.1)
 - [Pytorch VAE Git Repo](https://github.com/AntixK/PyTorch-VAE)
 - [Theanos VFAE Git Repo](https://github.com/NCTUMLlab/Huang-Ching-Wei/tree/master/Model)
 
