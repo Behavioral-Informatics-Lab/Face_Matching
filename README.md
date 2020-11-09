@@ -22,6 +22,9 @@ Jamal, Aidan, Chidansh, and Ahmed
 
 Additional data sets can be found on [Kaggle](https://www.kaggle.com/c/deepfake-detection-challenge/discussion/121594)
 
+## Related Works
+- [Joint Feature and Similarity Deep Learning for Vehicle Re-identification](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=8424333)
+
 ## Resources
 - [Variational Fair Autoencoder](https://github.com/dendisuhubdy/vfae/blob/master/vfae.py)
 - [A Cloud-guided Feature Extraction Approach for Image Retrieval in Mobile Edge Computing](https://ieeexplore.ieee.org/document/8851250)
