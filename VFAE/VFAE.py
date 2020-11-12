@@ -813,12 +813,17 @@ cele_attrib = pd.read_csv(file_path,delimiter = "\s+",names = columns)
 
 '''
 
+strct = VFAE_struct()
+coeff = VFAE_coef(alpha = 100, beta = 100,  chi= 1, D = 100, L = 1, optimize = 'Adam_update')
+
 VFAE(rng=np.random.RandomState(), 
     input_source=theano.tensor.matrix(),
     input_target=theano.tensor.matrix(),
     label_source=theano.tensor.matrix(),
     batch_size=200,
-    struct=VFAE_struct(),
-    coef=VFAE_coef(),
+    struct=strct,
+    coef=coeff,
     train = False,
     init_params=None)
+
+# VFAE_training(source_data, target_data, n_train_batches, n_epochs, struct, coef, description, process_display=True)
