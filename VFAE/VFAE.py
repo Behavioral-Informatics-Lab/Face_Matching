@@ -18,50 +18,68 @@ import util
 
 class VFAE_struct(object):
     def __init__(self):
-        self.encoder1 = nn.GMLP_struct()
+        # Encoders
+        self.encoder1 = nn.GMLP_struct() # GMLP = Gaussian MLP w/ share, mu, and sigma layers
         self.encoder2 = nn.GMLP_struct()
-        self.encoder3 = nn.NN_struct()
+        # Bottleneck?
+        self.encoder3 = nn.NN_struct() # layer dim, activation, learning rate, decay
+        # Decoders
         self.decoder1 = nn.GMLP_struct()
         self.decoder2 = nn.GMLP_struct()        
     
 
 class VFAE_coef(object):
     def __init__(self, alpha = 100, beta = 100,  chi= 1, D = 100, L = 1, optimize = 'Adam_update'):
-        self.alpha = alpha                     # weight for classification loss
-        self.beta = beta                       # weight for MMD
+        self.alpha = alpha                     # weight for classification loss; alpha = 100 * (Nbatchsource*Nbatchtarget)/Nbatchtarget
+        self.beta = beta                       # weight for MMD; beta = 100 * Nbatch
         self.D = D                             # number of random feature for fast MMD
-        self.L = L                             # sample number
-        self.chi = chi                         # criteria for reconstruction error
-        self.optimize = optimize               # option of optimization        
+        self.L = L                             # sample number?
+        self.chi = chi                         # criteria for reconstruction error?
+        self.optimize = optimize               # option of optimization; Adam optimizer        
 
 class VFAE_params(object):
     def __init__(self):
+        # encoders
         self.EC1_params=None
         self.EC2_params=None
+        # z
         self.EC3_params=None
+        # decoders
         self.DC1_params=None
         self.DC2_params=None
         
     def update_value(self, params_name, params_value, struct):
         
+        # assign value and names by first putting them in an iterable list 
         params = [ theano.shared(value=value, name=name, borrow=True)
             for value, name in zip(params_value, params_name)]
         
+        # put value and names into encoders
         self.EC1_params = []
         self.EC2_params = []
         self.EC3_params = []
         self.DC1_params = []
         self.DC2_params = []
         
-        i = 0;        
-        params_num = [len(struct.encoder1.share.activation), len(struct.encoder1.mu.activation), len(struct.encoder1.sigma.activation)]
+        # ENCODER 1 Parameter Update
+        i = 0 # iterate through params list to get name and values from params list
+        # number of parameters for shared, mu, and sigma layers      
+        params_num = [len(struct.encoder1.share.activation), 
+                len(struct.encoder1.mu.activation),
+                len(struct.encoder1.sigma.activation)]
+        # for each struct (share, mu, sigma), add parameters 
         for k in range(len(params_num)):
+            # temp list for each parameter reset for each struct
             tmp=[]
+            # for each parameter pair (value, name), append to encoder parameter 1 
             for j in range(params_num[k]):
+                # append value
                 tmp.append(params[i])
                 i = i+1
+                # append name
                 tmp.append(params[i])
                 i = i+1
+                # append temp as a list so EC1_params will be a list of lists
             self.EC1_params.append(tmp)
             
         params_num = [len(struct.encoder2.share.activation), len(struct.encoder2.mu.activation), len(struct.encoder2.sigma.activation)]
@@ -74,6 +92,7 @@ class VFAE_params(object):
                 i = i+1
             self.EC2_params.append(tmp)      
         
+        # only struct activation
         for j in range(len(struct.encoder3.activation)):
             self.EC3_params.append(params[i])
             i = i+1        
@@ -101,6 +120,7 @@ class VFAE_params(object):
                 i = i+1
             self.DC2_params.append(tmp)            
         
+    # purpose? diff from update_value?
     def update_symbol(self, params, struct):        
         self.EC1_params = []
         self.EC2_params = []
@@ -108,8 +128,13 @@ class VFAE_params(object):
         self.DC1_params = []
         self.DC2_params = []
         
-        i = 0;        
-        params_num = [len(struct.encoder1.share.activation), len(struct.encoder1.mu.activation), len(struct.encoder1.sigma.activation)]
+        # ENCODER 1
+        i = 0;  # iterate through list
+        # list of number of parameters for shared, mu, and sigma layers  
+        params_num = [len(struct.encoder1.share.activation),
+            len(struct.encoder1.mu.activation),
+            len(struct.encoder1.sigma.activation)]
+        # for each struct (share, mu, sigma), add parameters 
         for k in range(len(params_num)):
             tmp=[]
             for j in range(params_num[k]):
@@ -119,6 +144,8 @@ class VFAE_params(object):
                 i = i+1
             self.EC1_params.append(tmp)
             
+        # SAME PROCESS BUT FOR OTHER SECTIONS
+
         params_num = [len(struct.encoder2.share.activation), len(struct.encoder2.mu.activation), len(struct.encoder2.sigma.activation)]
         for k in range(len(params_num)):
             tmp=[]
@@ -183,57 +210,67 @@ class VFAE(object):
         """
         
         if train == True:
-            batch_size[0] = batch_size[0] * coef.L
-            batch_size[1] = batch_size[1] * coef.L
-            tmp_S = input_source
+            # batch size is [source batch, target batch]
+            batch_size[0] = batch_size[0] * coef.L # Source Batch size  * Sample num
+            batch_size[1] = batch_size[1] * coef.L # Target Batch size  * Sample num
+            tmp_S = input_source 
             tmp_T = input_target
             tmp_l = label_source
-            for i in range(coef.L-1):
+            for i in range(coef.L-1): # sample num - 1 since 0 index start
+                # T = Theano tensor
+                # adding lists of temp vars and arguments to Theano tensor along x/0 axis
                 tmp_S = T.concatenate( [tmp_S, input_source], axis = 0)
                 tmp_T = T.concatenate( [tmp_T, input_target], axis = 0)
                 tmp_l = T.concatenate( [tmp_l, label_source], axis = 0)
             input_source = tmp_S
             input_target = tmp_T
             label_source = tmp_l
-            L = coef.L
+            L = coef.L # L = Sample number
+
+        # if testing
         else:
-            L = 1
+            L = 1 
         
         self.L = L
         
         self.struct = struct
+        # encoding
         encoder1_struct = struct.encoder1
         encoder2_struct = struct.encoder2
-        encoder3_struct = struct.encoder3
+        encoder3_struct = struct.encoder3 # bottleneck
+        # decodinf
         decoder1_struct = struct.decoder1
         decoder2_struct = struct.decoder2
         
-        alpha = coef.alpha
-        beta = coef.beta
-        chi = coef.chi
-        D = coef.D        
+        alpha = coef.alpha # classification weight
+        beta = coef.beta # MMD Weight
+        chi = coef.chi # criteria for reconstruction
+        D = coef.D # number of random features for fast MMD        
         optimize = coef.optimize        
         
+        # if parameters are not initialized, then update
         if init_params == None:
             init_params = VFAE_params()            
         
         #------------------------------------------------------------------------
         #Encoder 1 Neural Network: present q_\phi({z_y}_n | x_n, d_n)
-        zero_v_S = T.zeros([batch_size[0],1], dtype=theano.config.floatX)
-        zero_v_T = T.zeros([batch_size[1],1], dtype=theano.config.floatX)
-        one_v_S = T.ones([batch_size[0],1], dtype=theano.config.floatX)
-        one_v_T = T.ones([batch_size[1],1], dtype=theano.config.floatX)
+
+        # what is this saying?
+        zero_v_S = T.zeros([batch_size[0],1], dtype=theano.config.floatX) # 1D array of zeros based on source batch size
+        zero_v_T = T.zeros([batch_size[1],1], dtype=theano.config.floatX) # 1D array of zeros based on target batch size
+        one_v_S = T.ones([batch_size[0],1], dtype=theano.config.floatX) # 1D array of ones based on source batch size
+        one_v_T = T.ones([batch_size[1],1], dtype=theano.config.floatX) # 1D array of ones based on target batch size
         
-        d_source = T.concatenate([zero_v_S, one_v_S], axis=1)
-        xd_source = T.concatenate([input_source, d_source], axis=1)
-        d_target = T.concatenate([one_v_T, zero_v_T], axis=1)
-        xd_target = T.concatenate([input_target, d_target], axis=1)
+        d_source = T.concatenate([zero_v_S, one_v_S], axis=1) # zero source + one source
+        xd_source = T.concatenate([input_source, d_source], axis=1) # input source + zero source + one source
+        d_target = T.concatenate([one_v_T, zero_v_T], axis=1) # zero target + zero target
+        xd_target = T.concatenate([input_target, d_target], axis=1) # input target + zero target + zero target
                     
         
         self.Encoder1 = nn.Gaussian_MLP(
-            rng=rng,
-            input_source=xd_source,
-            input_target=xd_target,
+            rng=rng, # numpy random state
+            input_source=xd_source, # input source + zero source + one source
+            input_target=xd_target, # input target + zero target + zero target
             struct = encoder1_struct,
             batch_size = batch_size,
             params = init_params.EC1_params,
@@ -251,8 +288,8 @@ class VFAE(object):
         self.zy_S = self.Encoder1.S_output
         self.zy_T = self.Encoder1.T_output
         
-        self.Encoder1_params = self.Encoder1.params
-        self.Encoder1_learning_rate = self.Encoder1.learning_rate     
+        self.Encoder1_params = self.Encoder1.params # get parameters from params list
+        self.Encoder1_learning_rate = self.Encoder1.learning_rate      
         self.Encoder1_decay = self.Encoder1.decay     
         
         #------------------------------------------------------------------------
@@ -493,6 +530,11 @@ def VFAE_training(source_data, target_data, n_train_batches, n_epochs, struct, c
     ###                        Data                       ###
     #########################################################               
                                                 
+    # must input data like [
+    #                       [[trainimg, label], [img, label], [img, label]], 
+    #                       [[validationimg, label], [img, label], [img, label]],
+    #                       [[testimg, label], [img, label], [img, label]]
+    #                       ]
     train_ftd_source, train_labeld_source = source_data[0]
     valid_ftd_source, valid_labeld_source = source_data[1]
     test_ftd_source, test_labeld_source = source_data[2]
@@ -815,15 +857,6 @@ cele_attrib = pd.read_csv(file_path,delimiter = "\s+",names = columns)
 
 strct = VFAE_struct()
 coeff = VFAE_coef(alpha = 100, beta = 100,  chi= 1, D = 100, L = 1, optimize = 'Adam_update')
-
-VFAE(rng=np.random.RandomState(), 
-    input_source=theano.tensor.matrix(),
-    input_target=theano.tensor.matrix(),
-    label_source=theano.tensor.matrix(),
-    batch_size=200,
-    struct=strct,
-    coef=coeff,
-    train = False,
-    init_params=None)
-
-# VFAE_training(source_data, target_data, n_train_batches, n_epochs, struct, coef, description, process_display=True)
+src = null
+trgt = null
+VFAE_training(src, trgt, 200, 5, strct, coeff, 'Cool Beans', process_display=True)
