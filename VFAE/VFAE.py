@@ -33,8 +33,8 @@ class VFAE_coef(object):
         self.alpha = alpha                     # weight for classification loss; alpha = 100 * (Nbatchsource*Nbatchtarget)/Nbatchtarget
         self.beta = beta                       # weight for MMD; beta = 100 * Nbatch
         self.D = D                             # number of random feature for fast MMD
-        self.L = L                             # sample number?
-        self.chi = chi                         # criteria for reconstruction error?
+        self.L = L                             # sample number ?
+        self.chi = chi                         # criteria for reconstruction error ?
         self.optimize = optimize               # option of optimization; Adam optimizer        
 
 class VFAE_params(object):
@@ -263,14 +263,14 @@ class VFAE(object):
         
         d_source = T.concatenate([zero_v_S, one_v_S], axis=1) # zero source + one source
         xd_source = T.concatenate([input_source, d_source], axis=1) # input source + zero source + one source
-        d_target = T.concatenate([one_v_T, zero_v_T], axis=1) # zero target + zero target
-        xd_target = T.concatenate([input_target, d_target], axis=1) # input target + zero target + zero target
+        d_target = T.concatenate([one_v_T, zero_v_T], axis=1) # one target + zero target
+        xd_target = T.concatenate([input_target, d_target], axis=1) # input target + one target + zero target
                     
         
         self.Encoder1 = nn.Gaussian_MLP(
             rng=rng, # numpy random state
             input_source=xd_source, # input source + zero source + one source
-            input_target=xd_target, # input target + zero target + zero target
+            input_target=xd_target, # input target + one target + zero target
             struct = encoder1_struct,
             batch_size = batch_size,
             params = init_params.EC1_params,
