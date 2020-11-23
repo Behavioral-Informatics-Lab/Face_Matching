@@ -107,7 +107,6 @@ class Net(nn.Module):
         x = F.max_pool2d(x,5)
         x = x.view(-1,512)
         
-        
         y = self.conv12(y)
         
         y = self.n12(y)
@@ -141,14 +140,12 @@ class Net(nn.Module):
 class Net_A(nn.Module):
     
     def __init__(self):
-        super(Net_A,self).__init__()
-       
+        super(Net_A,self).__init__()   
         self.ip3 = nn.Linear(1712,128,False)   # change the first parameter in case you change the size of the small image
         self.ip4 = nn.Linear(128,2,False)
         
     
     def forward(self,x):
-       
         x2 = self.ip3(x)
         x2 = F.relu(x2)
         x2 = self.ip4(x2)
@@ -287,7 +284,6 @@ if load_net:
     optimizer_A = optim.Adam(net_A.parameters(),lr = 0.001, weight_decay = 0.0005)
     optimizer_A.load_state_dict = checkpoint_A['optimizer']
 else:
-    
     net = Net().to(device)
     net_A = Net_A().to(device)
     optimizer = optim.Adam(net.parameters(),lr = 0.001, weight_decay = 0.0005)
@@ -338,7 +334,7 @@ for j,dataj in enumerate(val_dataloader):
     
     labelj = labelj[1].to(device)
     gender = gender[1].to(device)
-    gender = (gender+1)/2
+    gender = (gender+1)//2
     output = net(input1j,input2j)
     output_A = net_A(output[1])
     _,predicted1 = torch.max(output[0].data,1)
