@@ -33,14 +33,12 @@ device = torch.device("cuda" if use_cuda else "cpu")
 print(device)
 shape = (12, 12)
 ip_shape = (150, 150)
-
-batch_size = 256 # added myself
+# batch_size = 256
 learning_rate = 1e-3
 epochs = 10
 d = 20
-
 train_ratio = .7
-val_ratio = .1
+val_ratio = .3
 test_ratio = 1-train_ratio-val_ratio
 
 # DATA SET CONFIG #
@@ -121,8 +119,7 @@ val_index = index[train_data_length:(train_data_length+val_data_length)]
 # test data indexes correspond to the index values of  validation data length to test data length   
 test_index = index[train_data_length+val_data_length:]
 
-
-train_loader = DataLoader(dataset,batch_size=100,sampler = SubsetRandomSampler(train_index))
+train_loader = DataLoader(dataset,batch_size=50,sampler = SubsetRandomSampler(train_index))
 val_loader = DataLoader(dataset,batch_size=30,sampler = SubsetRandomSampler(val_index))
 test_loader = DataLoader(dataset,batch_size=30,sampler = SubsetRandomSampler(test_index))
 
@@ -143,26 +140,6 @@ for i in rnd_set:
      plt.show()
 '''
 
-'''
-def display_images(in_, out, n=1, label=None, count=False):
-    for N in range(n):
-        if in_ is not None:
-            in_pic = in_.data.cpu().view(-1, 150, 150)
-            plt.figure(figsize=(18, 4))
-            plt.suptitle(label + ' – real test data / reconstructions', color='w', fontsize=16)
-            for i in range(4):
-                plt.subplot(1,4,i+1)
-                plt.imshow(in_pic[i+4*N])
-                plt.axis('off')
-        out_pic = out.data.cpu().view(-1, 150, 150)
-        plt.figure(figsize=(18, 6))
-        for i in range(4):
-            plt.subplot(1,4,i+1)
-            plt.imshow(out_pic[i+4*N])
-            plt.axis('off')
-            if count: plt.title(str(4 * N + i), color='w')
-'''
-
 # CHECKPOINTS #
 
 def save_checkpoint(state, filename='Checkpoints/checkpoint_0.001.pth.tar'):
@@ -172,7 +149,7 @@ def save_checkpoint(state, filename='Checkpoints/checkpoint_0.001.pth.tar'):
 def save_checkpoint_A(state, filename='Checkpoints/checkpoint_A_0.001.pth.tar'):
     torch.save(state, filename)
 
-# VAE NEURAL NETWORK ##
+# NEURAL NETWORKS #
 
 class VAE(nn.Module):
     def __init__(self):
@@ -191,6 +168,9 @@ class VAE(nn.Module):
             nn.Sigmoid(),
         )
 
+        self.ip1 = nn.Linear(20,8)   # change the first parameter in case you change the size of the small image
+        self.ip2 = nn.Linear(8,2)
+
         self.encoder2 = nn.Sequential(
             nn.Linear(12*12, d ** 2),
             nn.ReLU(),
@@ -204,10 +184,10 @@ class VAE(nn.Module):
             nn.Sigmoid(),
         )
 
-        self.ip1 = nn.Linear(1712,128)   # change the first parameter in case you change the size of the small image
-        self.ip2 = nn.Linear(128,2)
-        self.ip3 = nn.Linear(1712,128,False)   # change the first parameter in case you change the size of the small image
-        self.ip4 = nn.Linear(128,2,False)
+        '''
+        self.ip3 = nn.Linear(300*20,20,False)   # change the first parameter in case you change the size of the small image
+        self.ip4 = nn.Linear(20,2,False)
+        '''
 
     def reparameterise(self, mu, logvar):
         if self.training:
@@ -218,31 +198,51 @@ class VAE(nn.Module):
             return mu
 
     def forward(self, x1, x2):
+        # HR VAE
         mu_logvar1 = self.encoder1(x1.view(-1, 150*150)).view(-1, 2, d)
         mu1 = mu_logvar1[:, 0, :]
         logvar1 = mu_logvar1[:, 1, :]
         z1 = self.reparameterise(mu1, logvar1)
         recnstrct1 = self.decoder1(z1)
 
+        # LR VAE
         mu_logvar2 = self.encoder2(x2.view(-1, 12*12)).view(-1, 2, d)
         mu2 = mu_logvar2[:, 0, :]
         logvar2 = mu_logvar2[:, 1, :]
         z2 = self.reparameterise(mu2, logvar2)
         recnstrct2 = self.decoder2(z2)
 
-        print(z1.shape)
-        print(recnstrct1.shape)
-        print(z2.shape)
-        print(recnstrct2.shape)
+        '''
+        in_pic = x1.data.cpu().view(-1, 150, 150)
+        plt.figure(figsize=(18, 4))
+        plt.imshow(in_pic[0])
+        plt.axis('off')
+        plt.show()
 
+        in_pic = recnstrct1.data.cpu().view(-1, 150, 150)
+        plt.figure(figsize=(18, 4))
+        plt.imshow(in_pic[0])
+        plt.axis('off')
+        plt.show()
+
+        in_pic = x2.data.cpu().view(-1, 12, 12)
+        plt.figure(figsize=(18, 4))
+        plt.imshow(in_pic[0])
+        plt.axis('off')
+        plt.show()
+
+        in_pic = recnstrct2.data.cpu().view(-1, 12, 12)
+        plt.figure(figsize=(18, 4))
+        plt.imshow(in_pic[0])
+        plt.axis('off')
+        plt.show()
+        '''
+
+        # vector arithmetic
         z = z1-z2
         
-        # recnstrct1 = recnstrct1.view(-1,512) # originally 512
-        # recnstrct2 = recnstrct2.view(-1,1200)
-
-        # cat = torch.cat((recnstrct1,recnstrct2),1)
-
-        facesame = self.ip1(z)
+        # takes z vector and reduces it to two nodes (same face or not)
+        facesame = self.ip1(z) 
         facesame = F.relu(facesame)
         facesame = self.ip2(facesame)
 
@@ -257,30 +257,30 @@ class Net_A(nn.Module):
         
         self.ip3 = nn.Linear(
             # input = size of flattened image
-            1712,
+            20,
             # output (heavily condensing)
-            128,
+            8,
             # bias set to False, the layer will not learn an additive bias (Default: True)
             False)   # change the first parameter in case you change the size of the small image
         
         # Relu between layers    
         
-        self.ip4 = nn.Linear(128,
-                             # output corresponds to two nodes: one for female and the other for male ?
+        self.ip4 = nn.Linear(8,
+                             # output corresponds to two nodes: one for female and the other for male
                              2,
                              # bias set to False, the layer will not learn an additive bias (Default: True)
                              False)
         
     
-    def forward(self,x):
-        # takes only the larger image as an input to test in the model
-        x2 = self.ip3(x)
-        x2 = F.relu(x2)
-        x2 = self.ip4(x2)
+    def forward(self,z):
+        # takes z for predicting male or not
+        malefem = self.ip3(z)
+        malefem = F.relu(malefem)
+        malefem = self.ip4(malefem)
         # x2 = x2.mul(-1)
         # x = F.relu(x)
         # x = F.softmax(x,1)
-        return x2
+        return malefem
 
 
 # LOADING / INITIALIZING NEURAL NETWORK #
@@ -309,7 +309,6 @@ else:
     optimizer_A = optim.Adam(net_A.parameters(),lr = 0.001, weight_decay = 0.0005)
     checkpoint= {'epoch':0}
 
-# model = VAE().to(device)
 
 
 # Reconstruction + KL divergence losses summed over all elements and batch
@@ -342,6 +341,8 @@ t = -1
 # run for 5 epochs
 for ep in range(checkpoint['epoch'],5):
     for i,data in enumerate(train_loader):
+
+        net.train()
         
         # Zeros descent gradient to help generalize after each batch
         optimizer.zero_grad()
@@ -360,15 +361,25 @@ for ep in range(checkpoint['epoch'],5):
         gender = (gender+1)//2
         #label = torch.Tensor.long(label[1])
         
+        # ===================forward=====================
+
         # feed input images 1 and 2 into neural network
         output = net(input1,input2)
         # feed output of main face matching NN to gender matching NN
+
         output_A = net_A(output[1])
 
         # ===================backward====================
 
+
+        # reconstruction loss 
+        # facesame, cat, recnstrct1, mu1, logvar1, recnstrct2, mu2, logvar2
+        reconstruct1loss = loss_function(output[2], input1, output[3], output[4], 150*150)
+        reconstruct2loss = loss_function(output[5], input2, output[6], output[7], 12*12)
+
         # use cross entropy loss as minimization criterion for both main an adv. NN
         # use true image as label
+        print(output[0].shape)
         loss1 = criterion (output[0],label1)
         #loss1.backward(retain_graph=True)
         # optimizer.step()
@@ -382,16 +393,10 @@ for ep in range(checkpoint['epoch'],5):
         # gender matching NN gradient step
         optimizer_A.step()
 
-        # reconstruction loss 
-        # facesame, cat, recnstrct1, mu1, logvar1, recnstrct2, mu2, logvar2
-        # NOT SURE IF X is the same ??????????????????????????????
-        reconstruct1loss = loss_function(output[2], net, output[3], output[4], 150*150)
-        reconstruct2loss = loss_function(output[5], net, output[6], output[7], 12*12)
+        
 
-        reconstructionloss = reconstruct1loss + reconstruct2loss
-
-        # formula: L = Ly - wLd
-        loss1 = loss1 + reconstructionloss - loss2.mul(1)  #new line 
+        # formula: L = Ly + Lhl + Llr - wLd
+        loss1 = loss1 + reconstruct1loss + reconstruct2loss - loss2.mul(1)  #new line 
         #loss2 = loss2.abs()
         # t = t*-1
 
@@ -399,6 +404,9 @@ for ep in range(checkpoint['epoch'],5):
         loss1.backward()
         # face matching NN gradient step
         optimizer.step()
+
+        # ===================log========================
+
         # adding loss as an entry to face matching list
         err_same.append(loss1.item())
         # adding loss as an entry to face matching list
@@ -419,7 +427,6 @@ for ep in range(checkpoint['epoch'],5):
             # make validation data iterable
             val_iter = iter(val_dataloader)
 
-            # counter variables
             total = 0
             correct1 = 0
             correct2 = 0
@@ -430,7 +437,7 @@ for ep in range(checkpoint['epoch'],5):
                 
                 labelj = labelj[1].to(device)
                 gender = gender[1].to(device)
-                gender = (gender+1)/2
+                gender = (gender+1)//2
                 output = net(input1j,input2j)
                 output_A = net_A(output[1])
                 _,predicted1 = torch.max(output[0].data,1)
@@ -464,49 +471,3 @@ for ep in range(checkpoint['epoch'],5):
             
             'optimizer' : optimizer_A.state_dict(),
         })
-
-
-
-'''
-codes = dict(μ=list(), logσ2=list(), y=list())
-for epoch in range(0, epochs + 1):
-    # Training
-    if epoch > 0:  # test untrained net first
-        net.train()
-        train_loss = 0
-        for x, _ in train_loader:
-            x = x.to(device)
-            # ===================forward=====================
-            x_hat, mu, logvar = VAE(x)
-            loss = loss_function(x_hat, x, mu, logvar)
-            train_loss += loss.item()
-            # ===================backward====================
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-        # ===================log========================
-        print(f'====> Epoch: {epoch} Average loss: {train_loss / len(train_loader.dataset):.4f}')
-    
-    # Testing
-
-    means, logvars, labels = list(), list(), list()
-    with torch.no_grad():
-        net.eval() 
-        test_loss = 0
-        for x, y in test_loader:
-            x = x.to(device)
-            # ===================forward=====================
-            x_hat, mu, logvar = VAE(x)
-            test_loss += loss_function(x_hat, x, mu, logvar).item()
-            # =====================log=======================
-            means.append(mu.detach())
-            logvars.append(logvar.detach())
-            labels.append(y.detach())
-    # ===================log========================
-    codes['μ'].append(torch.cat(means))
-    codes['logσ2'].append(torch.cat(logvars))
-    codes['y'].append(torch.cat(labels))
-    test_loss /= len(test_loader.dataset)
-    print(f'====> Test set loss: {test_loss:.4f}')
-    display_images(x, x_hat, 1, f'Epoch {epoch}')
-'''

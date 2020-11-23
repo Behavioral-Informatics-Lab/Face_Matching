@@ -133,6 +133,11 @@ class Net(nn.Module):
         # x2 = x2.mul(-1)
         # x = F.relu(x)
         # x = F.softmax(x,1)
+
+        print('asddasd')
+        print(x1.shape)
+        print(x.shape)
+
         return x1, x
       
       
