@@ -38,6 +38,7 @@ dim_HR = 128
 ip_shape = (dim_HR, dim_HR)
 batch_size = 256 # + size, + speed, - quality
 learning_rate = 1e-3
+weight_decay = .0005
 epochs = 5
 latent_size = 512 
 train_ratio = .7
@@ -139,7 +140,7 @@ test_loader = DataLoader(dataset, batch_size=batch_size,
 '''
 len_attrib = len(cele_attrib)
 # Select random images form celeba dataset
-rnd_set = np.random.permutation(len_attrib)[0:5]
+rnd_set = np.random.permutation(len_attrib)[0:5] # 5 images
 for i in rnd_set:
      idx = ("{:06d}.jpg".format(i))
      img_path = images_path+idx
@@ -294,11 +295,7 @@ class Net_Attr(nn.Module):
 
 # CHECKPOINTS #
 
-def save_checkpoint(state, filename='Checkpoints/checkpoint_0.001.pth.tar'):
-    torch.save(state, filename)
-# def save_checkpoint_A(state, filename='/home/jamal/Downloads/additional_files/checkpoint_A_0.001.pth.tar'):
-
-def save_checkpoint_A(state, filename='Checkpoints/checkpoint_A_0.001.pth.tar'):
+def save_checkpoint(state, filename): # filename='Checkpoints/checkpoint_0.001.pth.tar'):
     torch.save(state, filename)
 
 # LOADING / INITIALIZING NEURAL NETWORK #
@@ -307,20 +304,30 @@ if load_net: # MUST GO BACK AND UPDATE
     vae1 = VAE().to(device)
     vae2 = VAE().to(device)
 
-    # checkpoint = torch.load('/home/jamal/Downloads/baseline young celeba/checkpoint_baseline_celeb.pth.tar')
-    # checkpoint_A = torch.load('/home/jamal/Downloads/baseline young celeba/checkpoint_A_baseline_celeb.pth.tar')
-
     checkpoint = torch.load('Checkpoints/checkpoint_baseline_celeb.pth.tar')
     checkpoint_A = torch.load(
         'Checkpoints/checkpoint_A_baseline_celeb.pth.tar')
 
-    net.load_state_dict(checkpoint['state_dict'])
-    optimizer = optim.Adam(net.parameters(), lr=learning_rate, weight_decay=0.0005)
+    vae1.load_state_dict(checkpoint['state_dict'])
+    optimizer = optim.Adam(vae1.parameters(), lr=learning_rate, weight_decay=weight_decay)
     optimizer.load_state_dict = checkpoint['optimizer']
 
-    net_A.load_state_dict(checkpoint_A['state_dict'])
-    optimizer_A = optim.Adam(net_A.parameters(), lr=learning_rate, weight_decay=0.0005)
+    vae2.load_state_dict(checkpoint_A['state_dict'])
+    optimizer_A = optim.Adam(vae2.parameters(), lr=learning_rate, weight_decay=weight_decay)
     optimizer_A.load_state_dict = checkpoint_A['optimizer']
+
+
+    optimizer1 = optim.Adam(vae1.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer2 = optim.Adam(vae2.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizerface = optim.Adam(
+        net_face.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizergender = optim.Adam(
+        net_gender.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizerpale = optim.Adam(
+        net_pale.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizeryoung = optim.Adam(
+        net_young.parameters(), lr=learning_rate, weight_decay=weight_decay)
+
 else:
     # NETWORKS
     vae1 = VAE(nc=3, ngf=dim_HR, ndf=dim_HR,
@@ -333,16 +340,16 @@ else:
     net_young = Net_Attr().to(device)
 
     # OPTIMIZERS
-    optimizer1 = optim.Adam(vae1.parameters(), lr=learning_rate, weight_decay=0.0005)
-    optimizer2 = optim.Adam(vae2.parameters(), lr=learning_rate, weight_decay=0.0005)
+    optimizer1 = optim.Adam(vae1.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    optimizer2 = optim.Adam(vae2.parameters(), lr=learning_rate, weight_decay=weight_decay)
     optimizerface = optim.Adam(
-        net_face.parameters(), lr=learning_rate, weight_decay=0.0005)
+        net_face.parameters(), lr=learning_rate, weight_decay=weight_decay)
     optimizergender = optim.Adam(
-        net_gender.parameters(), lr=learning_rate, weight_decay=0.0005)
+        net_gender.parameters(), lr=learning_rate, weight_decay=weight_decay)
     optimizerpale = optim.Adam(
-        net_pale.parameters(), lr=learning_rate, weight_decay=0.0005)
+        net_pale.parameters(), lr=learning_rate, weight_decay=weight_decay)
     optimizeryoung = optim.Adam(
-        net_young.parameters(), lr=learning_rate, weight_decay=0.0005)
+        net_young.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     checkpoint = {'epoch': 0}
 '''
