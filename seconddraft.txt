@@ -1,0 +1,11 @@
+===================TRAINING=====================
+tensor(3381.3838, grad_fn=<AddBackward0>) tensor(3355.6221, grad_fn=<AddBackward0>) 0 0
+tensor(0.6498, grad_fn=<NllLossBackward>) tensor(0.6698, grad_fn=<NllLossBackward>) tensor(0.9947, grad_fn=<NllLossBackward>) tensor(0.6633, grad_fn=<NllLossBackward>) 0 0
+tensor(3379.7058, grad_fn=<AddBackward0>) tensor(3353.9441, grad_fn=<AddBackward0>) 0 0
+Same Face Accuracy: 53 %
+Gender Male Accuracy: 53 %
+Pale Skin Accuracy: 66 %
+Young Age Accuracy: 69 %
+tensor(35597.3555, grad_fn=<AddBackward0>) tensor(44495.1328, grad_fn=<AddBackward0>) 5 0
+tensor(0.9266, grad_fn=<NllLossBackward>) tensor(0.6802, grad_fn=<NllLossBackward>) tensor(1.4008, grad_fn=<NllLossBackward>) tensor(0.7706, grad_fn=<NllLossBackward>) 5 0
+tensor(35595.4297, grad_fn=<AddBackward0>) tensor(44493.2070, grad_fn=<AddBackward0>) 5 0

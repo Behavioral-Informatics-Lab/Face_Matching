@@ -36,11 +36,10 @@ dim_LR = 128
 shape = (dim_LR, dim_LR)
 dim_HR = 128
 ip_shape = (dim_HR, dim_HR)
-batch_size = 50
+batch_size = 256 # + size, + speed, - quality
 learning_rate = 1e-3
 epochs = 5
-latent_size = 500
-# d = 32
+latent_size = 512 
 train_ratio = .7
 val_ratio = .3
 test_ratio = 1-train_ratio-val_ratio
@@ -151,6 +150,13 @@ for i in rnd_set:
      plt.imshow(img)   
      plt.show()
 '''
+
+def display_img(img, dim):
+    in_pic = img.data.cpu().view(-1, dim, dim)
+    plt.figure(figsize=(5, 5))
+    plt.imshow(in_pic[0])
+    plt.axis('off')
+    plt.show()
 
 ## NETWORK ARCHITECTURES ##
 
@@ -361,8 +367,20 @@ def loss_function(recon_x, x, mu, logvar):
     # KLD_element = mu.pow(2).add_(logvar.exp()).mul_(-1).add_(1).add_(logvar) # original
     # KLD = torch.sum(KLD_element).mul_(-0.5) # original
     KLD = 0.5 * torch.sum(logvar.exp() - logvar - 1 + mu.pow(2)) # modified
+    return (BCE + KLD)
+    # return (BCE + KLD)/10000 # 10,000 has been added; must verify????????
 
-    return (BCE + KLD)/10000 # 10,000 has been added; must verify????????
+## DELETE LATER
+
+for i, data in enumerate(train_loader):
+    input1, input2, label, gender, pale, young = data.items()
+    input1, input2 = input1[1].to(device), input2[1].to(device)
+    label1 = label[1].to(device)
+
+    res1, mu1, logvar1, z1 = vae1(input1)
+    display_img(input1,dim_HR)
+    display_img(res1,dim_HR)
+    break
 
 ## TRAINING NETWORK ##
 
@@ -377,10 +395,11 @@ if (test_net==False):
     err_pale = []  # error of skin matching
     err_young = []  # error of age matching
 
-    # accuracy of face matching
-    acc1 = []
-    # accuracy of gender matching
-    acc2 = []
+    # accuracy of features
+    acc_face = []
+    acc_gender = []
+    acc_pale = []
+    acc_young = []
 
 
     # minimization criterion of face matching NN
@@ -391,8 +410,9 @@ if (test_net==False):
     criterionyoung = nn.CrossEntropyLoss()
 
     
-    # run for 5 epochs
+    # run for X epochs
     for ep in range(checkpoint['epoch'], epochs):
+        # run for every 
         for i, data in enumerate(train_loader):
             # ====================labels=====================
 
@@ -416,10 +436,7 @@ if (test_net==False):
             vae2.train()
 
             res1, mu1, logvar1, z1 = vae1(input1)
-            # print(z1.shape)
-            # print(res1.shape)
             res2, mu2, logvar2, z2 = vae2(input2)
-            # print(z2.shape)
 
             z = z1-z2 # vector arithmetic
 
@@ -428,8 +445,9 @@ if (test_net==False):
             # feature loss
             lossface = criterionface(net_face(z), label1)
             lossgender = criteriongender(net_gender(z), gender)
-            lossyoung = criteriongender(net_pale(z), young)
-            losspale = criteriongender(net_young(z), pale)
+            losspale = criterionpale(net_pale(z), pale)
+            lossyoung = criterionyoung(net_young(z), young)
+            
             # Lface - ΣLs
             lossfeatures = lossface - (lossgender.mul(1) + lossyoung.mul(1) + losspale.mul(1))
 
@@ -450,7 +468,6 @@ if (test_net==False):
             optimizerpale.zero_grad()
             optimizeryoung.zero_grad()
 
-
             # feature-based
             lossface.backward(retain_graph=True)
             optimizerface.step()
@@ -464,10 +481,12 @@ if (test_net==False):
             lossyoung.backward(retain_graph=True)
             optimizeryoung.step()
 
-            encoder1loss.backward(retain_graph=True, allow_unreachable=True)
+            # encoder1loss.backward(retain_graph=True)
+            reconstruct1loss.backward(retain_graph=True)
             optimizer1.step()
             
-            encoder2loss.backward(retain_graph=False, allow_unreachable=True)
+            # encoder2loss.backward(retain_graph=False)
+            reconstruct2loss.backward(retain_graph=False)
             optimizer2.step()
 
             # ===================log========================
@@ -482,10 +501,10 @@ if (test_net==False):
 
             # if 5th iteration, print the loss, iteration #, and epoch for each of the NN
             if (i % 5 == 0):
-                print(reconstruct1loss, i, ep)
-                print(reconstruct2loss, i, ep)
-                print(lossface, i, ep)
-                print(lossgender, i, ep)
+                print(i, ep)
+                print(reconstruct1loss,reconstruct2loss)
+                print(lossface, lossgender, losspale, lossyoung)
+                print(encoder1loss,encoder2loss)
                 #print (output[1])
 
             # if 50th iteration, check accuracy of model
@@ -508,7 +527,7 @@ if (test_net==False):
                 correctyoung = 0
                 # literally just going through and checking if the model predicts the true value (same face / which gender) correctly
                 for j, dataj in enumerate(val_dataloader):
-                    input1j, input2j, labelj, gender, skin, age = dataj.items()
+                    input1j, input2j, labelj, gender, pale, young = dataj.items()
                     input1j, input2j = input1j[1].to(
                         device), input2j[1].to(device)
 
@@ -522,6 +541,10 @@ if (test_net==False):
 
                     res1, mu1, logvar1, z1 = vae1(input1j)
                     res2, mu2, logvar2, z2 = vae2(input2j)
+
+                    # DISPLAY IMAGES (COMMENT OUT LATER!!!!)
+                    display_img(input1j,dim_HR)
+                    display_img(res1,dim_HR)
 
                     _, predictedface = torch.max(net_face(z).data, 1)
                     _, predictedgender = torch.max(net_gender(z).data, 1)
@@ -540,8 +563,22 @@ if (test_net==False):
                 print('Young Age Accuracy: %d %%' % (100*correctyoung/total))
 
                 # record the percent accurate for both NN into respective lists
-                acc1.append(100*correctface/total)  # low high
-                acc2.append(100*correctgender/total)  # male female
+                acc_face.append(100*correctface/total)  # low high
+                acc_gender.append(100*correctgender/total)  # male female
+                acc_pale.append(100*correctpale/total)  
+                acc_young.append(100*correctyoung/total)  
+
+            # DISPLAY IMAGES (COMMENT OUT LATER!!!!)
+            if (i % 50 == 0):
+                for j, dataj in enumerate(val_dataloader):
+                    input1j, input2j, labelj, gender, pale, young = dataj.items()
+                    input1j = input1j[1].to(device)
+                    labelj = labelj[1].to(device)
+
+                    res1, mu1, logvar1, z1 = vae1(input1j)
+                    
+                    display_img(input1j,dim_HR)
+                    display_img(res1,dim_HR)
 
         # outside of inner loop
         # saves for every epoch
@@ -569,12 +606,16 @@ if test_net:
     err_same = []
     err_gender = []
 
-    acc1 = []
-    acc2 = []
+    acc_face = []
+    acc_gender = []
+    acc_pale = []
+    acc_young = []
 
     criterion = nn.CrossEntropyLoss()
     criterion2 = nn.CrossEntropyLoss()
-    t = -1
+    criterionpale = nn.CrossEntropyLoss()
+    criterionyoung = nn.CrossEntropyLoss()
+    
     # val_dataloader = DataLoader(dataset,batch_size=30,sampler = SubsetRandomSampler(test_index))
 
     val_index1 = np.random.permutation(val_index)[:100]
@@ -592,7 +633,7 @@ if test_net:
     correctpale = 0
     correctyoung = 0
     for j, dataj in enumerate(val_dataloader):
-        input1j, input2j, labelj, gender = dataj.items()
+        input1j, input2j, labelj, gender, pale, young = dataj.items()
         input1j, input2j = input1j[1].to(device), input2j[1].to(device)
 
         labelj = labelj[1].to(device)
@@ -608,6 +649,8 @@ if test_net:
 
         _, predictedface = torch.max(net_face(z).data, 1)
         _, predictedgender = torch.max(net_gender(z).data, 1)
+        _, predictedpale = torch.max(net_pale(z).data, 1)
+        _, predictedyoung = torch.max(net_young(z).data, 1)
 
         total += labelj.size(0)
         correctface += (predictedface == labelj).sum().item()
@@ -624,8 +667,8 @@ if test_net:
         print('Gender Male Accuracy: %d %%' % (100*correctgender/total))
         print('Pale Skin Accuracy: %d %%' % (100*correctpale/total))
         print('Young Age Accuracy: %d %%' % (100*correctyoung/total))
-        acc1.append(100*correctface/total)
-        acc2.append(100*correctgender/total)
+        acc_face.append(100*correctface/total)
+        acc_gender.append(100*correctgender/total)
         print(mt.confusion_matrix(np.array(real_labels).flatten(),
                                   np.array(predicted_lables).flatten()))
         print(mt.confusion_matrix(np.array(real_labels_g).flatten(),
