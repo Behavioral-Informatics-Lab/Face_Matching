@@ -31,7 +31,6 @@ load_net = False
 test_net = False
 use_cuda = torch.cuda.is_available()  # use_cuda = False
 device = torch.device("cuda" if use_cuda else "cpu")
-torch.autograd.set_detect_anomaly(True) # debugging tool
 dim_LR = 128
 shape = (dim_LR, dim_LR)
 dim_HR = 128
@@ -48,7 +47,7 @@ test_ratio = 1-train_ratio-val_ratio
 # DATA SET CONFIG #
 
 
-class get_transformed_celeba(Dataset):
+class Male_Female_dataset(Dataset):
 
     def __init__(self, root_dir, shape, transform=None):
         self.root_dir = root_dir
@@ -80,8 +79,8 @@ class get_transformed_celeba(Dataset):
             image1 = image1/256.0
             annot = 0
             gender = col['Male'].values[0]
-            pale = col['Pale_Skin'].values[0]
-            young = col['Young'].values[0]
+            skin = col['Pale_Skin'].values[0]
+            age = col['Young'].values[0]
 
         else:
             image2 = image1
@@ -94,13 +93,13 @@ class get_transformed_celeba(Dataset):
             image1 = image1/256.0
             annot = 1
             gender = col['Male'].values[0]
-            pale = col['Pale_Skin'].values[0]
-            young = col['Young'].values[0]
+            skin = col['Pale_Skin'].values[0]
+            age = col['Young'].values[0]
 
         # annot = annot.astype('float').reshape(-1,2)
         sample = {'image1': image1, 'image2': image2,
                   'same': annot, 'gender': gender,
-                  'pale': pale, 'young': young}
+                  'skin': skin, 'age': age}
         return sample
 
 
@@ -108,7 +107,7 @@ columns = ['ImgId', '5_o_Clock_Shadow', ' Arched_Eyebrows', 'Attractive', 'Bags_
            'Male', 'Mouth_Slightly_Open', 'Mustache', 'Narrow_Eyes', 'No_Beard', 'Oval_Face', 'Pale_Skin', 'Pointy_Nose', 'Receding_Hairline', 'Rosy_Cheeks', 'Sideburns', 'Smiling', 'Straight_Hair', 'Wavy_Hair', 'Wearing_Earrings', 'Wearing_Hat', 'Wearing_Lipstick', 'Wearing_Necklace', 'Wearing_Necktie', 'Young']
 cele_attrib = pd.read_csv(file_path, delimiter="\s+", names=columns)
 
-dataset = get_transformed_celeba(images_path, shape)
+dataset = Male_Female_dataset(images_path, shape)
 
 # DATA LOADER #
 
@@ -152,106 +151,152 @@ for i in rnd_set:
      plt.show()
 '''
 
-## NETWORK ARCHITECTURES ##
+# CHECKPOINTS #
 
-class VAE(nn.Module):
-    def __init__(self, nc, ngf, ndf, latent_variable_size):
-        super(VAE, self).__init__()
+def save_checkpoint(state, filename='Checkpoints/checkpoint_0.001.pth.tar'):
+    torch.save(state, filename)
+# def save_checkpoint_A(state, filename='/home/jamal/Downloads/additional_files/checkpoint_A_0.001.pth.tar'):
 
-        self.nc = nc # numbrt of channels 
-        self.ngf = ngf # ndf = number of filters in the discriminator
-        self.ndf = ndf # ngf = number of filters in the generator
-        self.latent_variable_size = latent_variable_size # size of latent variable
+def save_checkpoint_A(state, filename='Checkpoints/checkpoint_A_0.001.pth.tar'):
+    torch.save(state, filename)
 
-        # encoder
-        self.e1 = nn.Conv2d(nc, ndf, 4, 2, 1)
-        self.bn1 = nn.BatchNorm2d(ndf)
+# NEURAL NETWORKS #
 
-        self.e2 = nn.Conv2d(ndf, ndf*2, 4, 2, 1)
-        self.bn2 = nn.BatchNorm2d(ndf*2)
 
-        self.e3 = nn.Conv2d(ndf*2, ndf*4, 4, 2, 1)
-        self.bn3 = nn.BatchNorm2d(ndf*4)
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
 
-        self.e4 = nn.Conv2d(ndf*4, ndf*8, 4, 2, 1)
-        self.bn4 = nn.BatchNorm2d(ndf*8)
+        self.encoder1 = nn.Sequential(
+            nn.Linear(150*150, d ** 2),
+            nn.ReLU(),
+            nn.Linear(d ** 2, d * 2)
+        )
 
-        self.e5 = nn.Conv2d(ndf*8, ndf*8, 4, 2, 1)
-        self.bn5 = nn.BatchNorm2d(ndf*8)
+        self.decoder1 = nn.Sequential(
+            nn.Linear(d, d ** 2),
+            nn.ReLU(),
+            nn.Linear(d ** 2, 150*150),
+            nn.Sigmoid(),
+        )
 
-        self.fc1 = nn.Linear(ndf*8*4*4, latent_variable_size)
-        self.fc2 = nn.Linear(ndf*8*4*4, latent_variable_size)
+        # change the first parameter in case you change the size of the small image
+        self.ip1 = nn.Linear(d, 8)
+        self.ip2 = nn.Linear(8, 2)
 
-        # decoder
-        self.d1 = nn.Linear(latent_variable_size, ngf*8*2*4*4)
+        self.encoder2 = nn.Sequential(
+            nn.Linear(12*12, d ** 2),
+            nn.ReLU(),
+            nn.Linear(d ** 2, d * 2)
+        )
 
-        self.up1 = nn.UpsamplingNearest2d(scale_factor=2)
-        self.pd1 = nn.ReplicationPad2d(1)
-        self.d2 = nn.Conv2d(ngf*8*2, ngf*8, 3, 1)
-        self.bn6 = nn.BatchNorm2d(ngf*8, 1.e-3)
+        self.decoder2 = nn.Sequential(
+            nn.Linear(d, d ** 2),
+            nn.ReLU(),
+            nn.Linear(d ** 2, 12*12),  # rconstructed image
+            nn.Sigmoid(),
+        )
 
-        self.up2 = nn.UpsamplingNearest2d(scale_factor=2)
-        self.pd2 = nn.ReplicationPad2d(1)
-        self.d3 = nn.Conv2d(ngf*8, ngf*4, 3, 1)
-        self.bn7 = nn.BatchNorm2d(ngf*4, 1.e-3)
+        '''
+        self.ip3 = nn.Linear(300*20,20,False)   # change the first parameter in case you change the size of the small image
+        self.ip4 = nn.Linear(20,2,False)
+        '''
 
-        self.up3 = nn.UpsamplingNearest2d(scale_factor=2)
-        self.pd3 = nn.ReplicationPad2d(1)
-        self.d4 = nn.Conv2d(ngf*4, ngf*2, 3, 1)
-        self.bn8 = nn.BatchNorm2d(ngf*2, 1.e-3)
-
-        self.up4 = nn.UpsamplingNearest2d(scale_factor=2)
-        self.pd4 = nn.ReplicationPad2d(1)
-        self.d5 = nn.Conv2d(ngf*2, ngf, 3, 1)
-        self.bn9 = nn.BatchNorm2d(ngf, 1.e-3)
-
-        self.up5 = nn.UpsamplingNearest2d(scale_factor=2)
-        self.pd5 = nn.ReplicationPad2d(1)
-        self.d6 = nn.Conv2d(ngf, nc, 3, 1)
-
-        self.leakyrelu = nn.LeakyReLU(0.2)
-        self.relu = nn.ReLU()
-        self.sigmoid = nn.Sigmoid()
-
-    def encode(self, x):
-        h1 = self.leakyrelu(self.bn1(self.e1(x)))
-        h2 = self.leakyrelu(self.bn2(self.e2(h1)))
-        h3 = self.leakyrelu(self.bn3(self.e3(h2)))
-        h4 = self.leakyrelu(self.bn4(self.e4(h3)))
-        h5 = self.leakyrelu(self.bn5(self.e5(h4)))
-        h5 = h5.view(-1, self.ndf*8*4*4)
-
-        return self.fc1(h5), self.fc2(h5)
-
-    def reparametrize(self, mu, logvar):
-        std = logvar.mul(0.5).exp_()
-        if use_cuda:
-            eps = torch.cuda.FloatTensor(std.size()).normal_()
+    def reparameterise(self, mu, logvar):
+        if self.training:
+            std = logvar.mul(0.5).exp_()
+            eps = std.data.new(std.size()).normal_()
+            return eps.mul(std).add_(mu)
         else:
-            eps = torch.FloatTensor(std.size()).normal_()
-        eps = Variable(eps)
-        return eps.mul(std).add_(mu)
+            return mu
 
-    def decode(self, z):
-        h1 = self.relu(self.d1(z))
-        h1 = h1.view(-1, self.ngf*8*2, 4, 4)
-        h2 = self.leakyrelu(self.bn6(self.d2(self.pd1(self.up1(h1)))))
-        h3 = self.leakyrelu(self.bn7(self.d3(self.pd2(self.up2(h2)))))
-        h4 = self.leakyrelu(self.bn8(self.d4(self.pd3(self.up3(h3)))))
-        h5 = self.leakyrelu(self.bn9(self.d5(self.pd4(self.up4(h4)))))
+    def forward(self, x1, x2):
+        # HR VAE
+        # print(x1.shape) # three color channels for R,G,B.
 
-        return self.sigmoid(self.d6(self.pd5(self.up5(h5))))
+        encoded1 = self.encoder1(x1.view(-1, 150*150))
+        mu_logvar1 = encoded1.view(-1, 2, d)
+        print(mu_logvar1.shape)
+        mu1 = mu_logvar1[:, 0, :]
+        logvar1 = mu_logvar1[:, 1, :]
+        z1 = self.reparameterise(mu1, logvar1)
+        recnstrct1 = self.decoder1(z1)
 
-    def get_latent_var(self, x):
-        mu, logvar = self.encode(x.view(-1, self.nc, self.ndf, self.ngf))
-        z = self.reparametrize(mu, logvar)
-        return z
+        # LR VAE
+        mu_logvar2 = self.encoder2(x2.view(-1, 12*12)).view(-1, 2, d)
+        mu2 = mu_logvar2[:, 0, :]
+        logvar2 = mu_logvar2[:, 1, :]
+        z2 = self.reparameterise(mu2, logvar2)
+        recnstrct2 = self.decoder2(z2)
 
-    def forward(self, x):
-        mu, logvar = self.encode(x.view(-1, self.nc, self.ndf, self.ngf))
-        z = self.reparametrize(mu, logvar)
-        res = self.decode(z)
-        return res, mu, logvar, z
+        '''
+        in_pic = x1.data.cpu().view(-1, 150, 150)
+        plt.figure(figsize=(18, 4))
+        plt.imshow(in_pic[0])
+        plt.axis('off')
+        plt.show()
+
+        in_pic = recnstrct1.data.cpu().view(-1, 150, 150)
+        plt.figure(figsize=(18, 4))
+        plt.imshow(in_pic[0])
+        plt.axis('off')
+        plt.show()
+
+        in_pic = x2.data.cpu().view(-1, 12, 12)
+        plt.figure(figsize=(18, 4))
+        plt.imshow(in_pic[0])
+        plt.axis('off')
+        plt.show()
+
+        in_pic = recnstrct2.data.cpu().view(-1, 12, 12)
+        plt.figure(figsize=(18, 4))
+        plt.imshow(in_pic[0])
+        plt.axis('off')
+        plt.show()
+        '''
+
+        # vector arithmetic
+        z = z1-z2
+
+        # takes z vector and reduces it to two nodes (same face or not)
+        facesame = self.ip1(z)
+        facesame = F.relu(facesame)
+        facesame = self.ip2(facesame)
+
+        return facesame, z, recnstrct1, mu1, logvar1, recnstrct2, mu2, logvar2
+
+
+# adversarial neural network (male/female identifier)
+class Net_A(nn.Module):
+
+    def __init__(self):
+        super(Net_A, self).__init__()
+
+        self.ip3 = nn.Linear(
+            # input = size of flattened image
+            d,
+            # output (heavily condensing)
+            8,
+            # bias set to False, the layer will not learn an additive bias (Default: True)
+            False)   # change the first parameter in case you change the size of the small image
+
+        # Relu between layers
+
+        self.ip4 = nn.Linear(8,
+                             # output corresponds to two nodes: one for female and the other for male
+                             2,
+                             # bias set to False, the layer will not learn an additive bias (Default: True)
+                             False)
+
+    def forward(self, z):
+        # takes z for predicting male or not
+        malefem = self.ip3(z)
+        malefem = F.relu(malefem)
+        malefem = self.ip4(malefem)
+        # x2 = x2.mul(-1)
+        # x = F.relu(x)
+        # x = F.softmax(x,1)
+        return malefem
 
 
 class Net_Attr(nn.Module):
@@ -260,7 +305,7 @@ class Net_Attr(nn.Module):
         super(Net_Attr, self).__init__()
 
         self.ip1 = nn.Linear(
-            # input = size of laten vector
+            # input = size of flattened image
             latent_size,
             # output (heavily condensing)
             latent_size//4,
@@ -277,29 +322,20 @@ class Net_Attr(nn.Module):
 
     def forward(self, z):
         # takes z for predicting attribute or not
-        y = self.ip1(z)
-        y = F.relu(y)
-        y = self.ip2(y)
+        malefem = self.ip1(z)
+        malefem = F.relu(malefem)
+        malefem = self.ip2(malefem)
         # x2 = x2.mul(-1)
         # x = F.relu(x)
         # x = F.softmax(x,1)
-        return y
-
-
-# CHECKPOINTS #
-
-def save_checkpoint(state, filename='Checkpoints/checkpoint_0.001.pth.tar'):
-    torch.save(state, filename)
-# def save_checkpoint_A(state, filename='/home/jamal/Downloads/additional_files/checkpoint_A_0.001.pth.tar'):
-
-def save_checkpoint_A(state, filename='Checkpoints/checkpoint_A_0.001.pth.tar'):
-    torch.save(state, filename)
+        return malefem
 
 # LOADING / INITIALIZING NEURAL NETWORK #
 
-if load_net: # MUST GO BACK AND UPDATE
-    vae1 = VAE().to(device)
-    vae2 = VAE().to(device)
+
+if load_net:
+    net = VAE().to(device)
+    net_A = Net_A().to(device)
 
     # checkpoint = torch.load('/home/jamal/Downloads/baseline young celeba/checkpoint_baseline_celeb.pth.tar')
     # checkpoint_A = torch.load('/home/jamal/Downloads/baseline young celeba/checkpoint_A_baseline_celeb.pth.tar')
@@ -323,23 +359,23 @@ else:
                latent_variable_size=latent_size).to(device)
     net_face = Net_Attr().to(device)
     net_gender = Net_Attr().to(device)
-    net_pale = Net_Attr().to(device)
-    net_young = Net_Attr().to(device)
+    net_skin = Net_Attr().to(device)
+    net_age = Net_Attr().to(device)
 
-    # OPTIMIZERS
+    # OPTIMIZER
     optimizer1 = optim.Adam(vae1.parameters(), lr=learning_rate, weight_decay=0.0005)
     optimizer2 = optim.Adam(vae2.parameters(), lr=learning_rate, weight_decay=0.0005)
     optimizerface = optim.Adam(
         net_face.parameters(), lr=learning_rate, weight_decay=0.0005)
     optimizergender = optim.Adam(
         net_gender.parameters(), lr=learning_rate, weight_decay=0.0005)
-    optimizerpale = optim.Adam(
-        net_pale.parameters(), lr=learning_rate, weight_decay=0.0005)
-    optimizeryoung = optim.Adam(
-        net_young.parameters(), lr=learning_rate, weight_decay=0.0005)
+    optimizergender = optim.Adam(
+        net_skin.parameters(), lr=learning_rate, weight_decay=0.0005)
+    optimizergender = optim.Adam(
+        net_age.parameters(), lr=learning_rate, weight_decay=0.0005)
 
     checkpoint = {'epoch': 0}
-'''
+
 # Reconstruction + KL divergence losses summed over all elements and batch
 def loss_function(x_hat, x, mu, logvar, img_size):
     BCE = nn.functional.binary_cross_entropy(
@@ -347,35 +383,18 @@ def loss_function(x_hat, x, mu, logvar, img_size):
     )
     KLD = 0.5 * torch.sum(logvar.exp() - logvar - 1 + mu.pow(2))
     return BCE + KLD
-'''
 
-## VAE RECONSTRUCTION LOSS ##
 
-reconstruction_function = nn.BCELoss()
-reconstruction_function.size_average = False
-def loss_function(recon_x, x, mu, logvar):
-    BCE = reconstruction_function(recon_x, x)
 
-    # # https://arxiv.org/abs/1312.6114 (Appendix B)
-    # # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-    # KLD_element = mu.pow(2).add_(logvar.exp()).mul_(-1).add_(1).add_(logvar) # original
-    # KLD = torch.sum(KLD_element).mul_(-0.5) # original
-    KLD = 0.5 * torch.sum(logvar.exp() - logvar - 1 + mu.pow(2)) # modified
-
-    return (BCE + KLD)/10000 # 10,000 has been added; must verify????????
-
-## TRAINING NETWORK ##
 
 if (test_net==False):
-
-    print('===================TRAINING=====================')
-
+    # error
     err_rcnstrctn1 = []
     err_rcnstrctn2 = []
     err_same = []  # error of face matching
     err_gender = []  # error of gender matching
-    err_pale = []  # error of skin matching
-    err_young = []  # error of age matching
+    err_skin = []  # error of skin matching
+    err_age = []  # error of age matching
 
     # accuracy of face matching
     acc1 = []
@@ -385,60 +404,48 @@ if (test_net==False):
 
     # minimization criterion of face matching NN
     criterionface = nn.CrossEntropyLoss()
-    # maximization criterion of matching NN
+    # maximization criterion of gender matching NN
     criteriongender = nn.CrossEntropyLoss()
-    criterionpale = nn.CrossEntropyLoss()
-    criterionyoung = nn.CrossEntropyLoss()
 
-    
+    # not sure what t is ? it's only use seems to be commented out
+    t = -1
+    print('start')
     # run for 5 epochs
     for ep in range(checkpoint['epoch'], epochs):
         for i, data in enumerate(train_loader):
-            # ====================labels=====================
 
-            # input1 = high res image
-            # input2 = low res 50% same image
+            # input1 = high res true image
+            # input2 = low res true or false image
             # label = name corresponding to true image path
-            # gender, where male == 1
-            input1, input2, label, gender, pale, young = data.items()
+            # gender = male or female label
+            input1, input2, label, gender = data.items()
+            # run on cuda gpu if available
             input1, input2 = input1[1].to(device), input2[1].to(device)
             label1 = label[1].to(device)
             gender = gender[1].to(device)
+            # not sure why it is (gender+1)/2?
             gender = (gender+1)//2
-            pale = pale[1].to(device)
-            pale = (pale+1)//2
-            young = young[1].to(device)
-            young = (young+1)//2
-            
+            #label = torch.Tensor.long(label[1])
+
             # ===================forward=====================
 
-            vae1.train()
-            vae2.train()
+            # feed input images 1 and 2 into neural network
+            output = net(input1,input2)
+            # feed output of main face matching NN to gender matching NN
 
-            res1, mu1, logvar1, z1 = vae1(input1)
-            # print(z1.shape)
-            # print(res1.shape)
-            res2, mu2, logvar2, z2 = vae2(input2)
-            # print(z2.shape)
-
-            z = z1-z2 # vector arithmetic
-
+            output_A = net_A(output[1])
+            
             # =====================loss=======================
 
-            # feature loss
-            lossface = criterionface(net_face(z), label1)
-            lossgender = criteriongender(net_gender(z), gender)
-            lossyoung = criteriongender(net_pale(z), young)
-            losspale = criteriongender(net_young(z), pale)
-            # Lface - ΣLs
-            lossfeatures = lossface - (lossgender.mul(1) + lossyoung.mul(1) + losspale.mul(1))
-
-            # vae loss calculations = Lreconstruction + Lface - ΣLs
-            # parameters: x_hat, x, mu, logvar
+            # parameters: x_hat, x, mu, logvar, shape
             reconstruct1loss = loss_function(res1, input1, mu1, logvar1)
             reconstruct2loss = loss_function(res2, input2, mu2, logvar2)
-            encoder1loss = reconstruct1loss + lossfeatures
-            encoder2loss = reconstruct2loss + lossfeatures
+            lossface = criterionface(net_face(z), label1)
+            lossgender = criteriongender(net_gender(z), gender)
+
+            # vae loss calculations
+            encoder1loss = reconstruct1loss + lossface - lossgender.mul(1)
+            encoder2loss = reconstruct2loss + lossface - lossgender.mul(1)
 
             # ===================backward====================
 
@@ -447,28 +454,36 @@ if (test_net==False):
             optimizer2.zero_grad()
             optimizerface.zero_grad()
             optimizergender.zero_grad()
-            optimizerpale.zero_grad()
-            optimizeryoung.zero_grad()
 
+            # reconstruction loss 
+            # facesame, cat, recnstrct1, mu1, logvar1, recnstrct2, mu2, logvar2
+            reconstruct1loss = loss_function(output[2], input1, output[3], output[4], 150*150)
+            reconstruct2loss = loss_function(output[5], input2, output[6], output[7], 12*12)
 
-            # feature-based
-            lossface.backward(retain_graph=True)
-            optimizerface.step()
+            # use cross entropy loss as minimization criterion for both main an adv. NN
+            # use true image as label
+            loss1 = criterion (output[0],label1)
+            #loss1.backward(retain_graph=True)
+            # optimizer.step()
 
-            lossgender.backward(retain_graph=True)
-            optimizergender.step()
-
-            losspale.backward(retain_graph=True)
-            optimizerpale.step()
-
-            lossyoung.backward(retain_graph=True)
-            optimizeryoung.step()
-
-            encoder1loss.backward(retain_graph=True, allow_unreachable=True)
-            optimizer1.step()
+            # use gender as label
+            loss2 = criterion2 (output_A,gender)
             
-            encoder2loss.backward(retain_graph=False, allow_unreachable=True)
-            optimizer2.step()
+            # backwards propagation 
+            # not sure why retain graph ? In essence, it will retain any necessary information to calculate a certain variable, so that we can do backward pass on it.
+            loss2.backward(retain_graph=True)
+            # gender matching NN gradient step
+            optimizer_A.step()
+
+            # formula: L = Ly + Lhl + Llr - wLd
+            loss1 = loss1 + reconstruct1loss + reconstruct2loss - loss2.mul(1)  #new line 
+            #loss2 = loss2.abs()
+            # t = t*-1
+
+            # backwards propagation 
+            loss1.backward()
+            # face matching NN gradient step
+            optimizer.step()
 
             # ===================log========================
 
@@ -477,8 +492,10 @@ if (test_net==False):
             err_rcnstrctn1.append(reconstruct2loss.item())
             err_same.append(lossface.item())
             err_gender.append(lossgender.item())
-            err_pale.append(losspale.item())
-            err_young.append(lossyoung.item())
+
+            # evaluate models; reduces runtime
+            vae1.eval()
+            vae2.eval()
 
             # if 5th iteration, print the loss, iteration #, and epoch for each of the NN
             if (i % 5 == 0):
@@ -490,9 +507,6 @@ if (test_net==False):
 
             # if 50th iteration, check accuracy of model
             if (i % 25 == 0):
-                # evaluate models; reduces runtime
-                vae1.eval()
-                vae2.eval()
                 # create a numpy array from the indexes from the validation array
                 val_index1 = np.random.permutation(val_index)[:100]
                 # test for accuracy using 30 images from validation data
@@ -502,46 +516,32 @@ if (test_net==False):
                 val_iter = iter(val_dataloader)
 
                 total = 0
-                correctface = 0
-                correctgender = 0
-                correctpale = 0
-                correctyoung = 0
+                correct1 = 0
+                correct2 = 0
                 # literally just going through and checking if the model predicts the true value (same face / which gender) correctly
                 for j, dataj in enumerate(val_dataloader):
-                    input1j, input2j, labelj, gender, skin, age = dataj.items()
+                    input1j, input2j, labelj, gender = dataj.items()
                     input1j, input2j = input1j[1].to(
                         device), input2j[1].to(device)
 
                     labelj = labelj[1].to(device)
                     gender = gender[1].to(device)
                     gender = (gender+1)//2
-                    pale = pale[1].to(device)
-                    pale = (pale+1)//2
-                    young = young[1].to(device)
-                    young = (young+1)//2
 
                     res1, mu1, logvar1, z1 = vae1(input1j)
                     res2, mu2, logvar2, z2 = vae2(input2j)
-
-                    _, predictedface = torch.max(net_face(z).data, 1)
-                    _, predictedgender = torch.max(net_gender(z).data, 1)
-                    _, predictedpale = torch.max(net_pale(z).data, 1)
-                    _, predictedyoung = torch.max(net_young(z).data, 1)
-
+                    _, predicted1 = torch.max(net_face(z).data, 1)
+                    _, predicted2 = torch.max(net_gender(z).data, 1)
                     total += labelj.size(0)
-                    correctface += (predictedface == labelj).sum().item()
-                    correctgender += (predictedgender == gender).sum().item()
-                    correctpale += (predictedpale == pale).sum().item()
-                    correctyoung += (predictedyoung == young).sum().item()
+                    correct1 += (predicted1 == labelj).sum().item()
+                    correct2 += (predicted2 == gender).sum().item()
                 # prints out percent accurate for both NN
-                print('Same Face Accuracy: %d %%' % (100*correctface/total))
-                print('Gender Male Accuracy: %d %%' % (100*correctgender/total))
-                print('Pale Skin Accuracy: %d %%' % (100*correctpale/total))
-                print('Young Age Accuracy: %d %%' % (100*correctyoung/total))
+                print('Face Accuracy: %d %%' % (100*correct1/total))
+                print('Gender Accuracy: %d %%' % (100*correct2/total))
 
                 # record the percent accurate for both NN into respective lists
-                acc1.append(100*correctface/total)  # low high
-                acc2.append(100*correctgender/total)  # male female
+                acc1.append(100*correct1/total)  # low high
+                acc2.append(100*correct2/total)  # male female
 
         # outside of inner loop
         # saves for every epoch
@@ -562,10 +562,15 @@ if (test_net==False):
             'optimizer': net_face.state_dict(),
         })
 
+
+# visualization test
+
+imgplot = plt.imshow(lum_img)
+plt.colorbar()
+
 ## TESTING MODEL ##
 
 if test_net:
-    print('===================TESTING=====================')
     err_same = []
     err_gender = []
 
@@ -585,12 +590,9 @@ if test_net:
     real_labels_g = []
     predicted_lables_g = []
     real_labels = []
-
     total = 0
-    correctface = 0
-    correctgender = 0
-    correctpale = 0
-    correctyoung = 0
+    correct1 = 0
+    correct2 = 0
     for j, dataj in enumerate(val_dataloader):
         input1j, input2j, labelj, gender = dataj.items()
         input1j, input2j = input1j[1].to(device), input2j[1].to(device)
@@ -598,35 +600,27 @@ if test_net:
         labelj = labelj[1].to(device)
         gender = gender[1].to(device)
         gender = (gender+1)//2
-        pale = pale[1].to(device)
-        pale = (pale+1)//2
-        young = young[1].to(device)
-        young = (young+1)//2
 
         res1, mu1, logvar1, z1 = vae1(input1j)
         res2, mu2, logvar2, z2 = vae2(input2j)
 
-        _, predictedface = torch.max(net_face(z).data, 1)
-        _, predictedgender = torch.max(net_gender(z).data, 1)
+        _, predicted1 = torch.max(net_face(z).data, 1)
+        _, predicted2 = torch.max(net_gender(z).data, 1)
 
         total += labelj.size(0)
-        correctface += (predictedface == labelj).sum().item()
-        correctgender += (predictedgender == gender).sum().item()
-        correctpale += (predictedpale == pale).sum().item()
-        correctyoung += (predictedyoung == young).sum().item()
-
-        predicted_lables.append(torch.Tensor.numpy(predictedface.cpu()))
+        correct1 += (predicted1 == labelj).sum().item()
+        correct2 += (predicted2 == gender).sum().item()
+        predicted_lables.append(torch.Tensor.numpy(predicted1.cpu()))
         real_labels.append(torch.Tensor.numpy(labelj.cpu()))
 
-        predicted_lables_g.append(torch.Tensor.numpy(predictedgender.cpu()))
+        predicted_lables_g.append(torch.Tensor.numpy(predicted2.cpu()))
         real_labels_g.append(torch.Tensor.numpy(gender.cpu()))
-        print('Same Face Accuracy: %d %%' % (100*correctface/total))
-        print('Gender Male Accuracy: %d %%' % (100*correctgender/total))
-        print('Pale Skin Accuracy: %d %%' % (100*correctpale/total))
-        print('Young Age Accuracy: %d %%' % (100*correctyoung/total))
-        acc1.append(100*correctface/total)
-        acc2.append(100*correctgender/total)
+        print('Accuracy_LH: %d %%' % (100*correct1/total))
+        print('Accuracy_MF: %d %%' % (100*correct2/total))
+        acc1.append(100*correct1/total)
+        acc2.append(100*correct2/total)
         print(mt.confusion_matrix(np.array(real_labels).flatten(),
                                   np.array(predicted_lables).flatten()))
+
         print(mt.confusion_matrix(np.array(real_labels_g).flatten(),
                                   np.array(predicted_lables_g).flatten()))

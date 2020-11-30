@@ -1,0 +1,99 @@
+start
+tensor(0.1734, grad_fn=<DivBackward0>) 0 0
+tensor(0.1717, grad_fn=<DivBackward0>) 0 0
+tensor(0.6578, grad_fn=<NllLossBackward>) 0 0
+tensor(0.8623, grad_fn=<NllLossBackward>) 0 0
+Accuracy_LH: 57 %
+Accuracy_MF: 54 %
+tensor(2.1846, grad_fn=<DivBackward0>) 5 0   
+tensor(2.6846, grad_fn=<DivBackward0>) 5 0   
+tensor(0.7491, grad_fn=<NllLossBackward>) 5 0
+tensor(2.5263, grad_fn=<NllLossBackward>) 5 0
+tensor(1.6176, grad_fn=<DivBackward0>) 10 0
+tensor(1.6570, grad_fn=<DivBackward0>) 10 0
+tensor(0.9009, grad_fn=<NllLossBackward>) 10 0
+tensor(0.6996, grad_fn=<NllLossBackward>) 10 0
+tensor(1.3596, grad_fn=<DivBackward0>) 15 0
+tensor(1.1092, grad_fn=<DivBackward0>) 15 0
+tensor(0.8032, grad_fn=<NllLossBackward>) 15 0
+tensor(0.6522, grad_fn=<NllLossBackward>) 15 0
+tensor(1.1343, grad_fn=<DivBackward0>) 20 0
+tensor(0.8942, grad_fn=<DivBackward0>) 20 0
+tensor(0.8059, grad_fn=<NllLossBackward>) 20 0
+tensor(0.7199, grad_fn=<NllLossBackward>) 20 0
+tensor(0.9857, grad_fn=<DivBackward0>) 25 0
+tensor(0.9389, grad_fn=<DivBackward0>) 25 0
+tensor(0.8393, grad_fn=<NllLossBackward>) 25 0
+tensor(0.7417, grad_fn=<NllLossBackward>) 25 0
+Accuracy_LH: 51 %
+Accuracy_MF: 58 %
+tensor(0.6783, grad_fn=<DivBackward0>) 30 0
+tensor(0.7174, grad_fn=<DivBackward0>) 30 0
+tensor(0.7489, grad_fn=<NllLossBackward>) 30 0
+tensor(0.6450, grad_fn=<NllLossBackward>) 30 0
+tensor(0.5718, grad_fn=<DivBackward0>) 35 0
+tensor(0.5996, grad_fn=<DivBackward0>) 35 0
+tensor(0.6508, grad_fn=<NllLossBackward>) 35 0
+tensor(0.6972, grad_fn=<NllLossBackward>) 35 0
+tensor(0.6843, grad_fn=<DivBackward0>) 40 0
+tensor(0.5891, grad_fn=<DivBackward0>) 40 0
+tensor(0.7031, grad_fn=<NllLossBackward>) 40 0
+tensor(0.5868, grad_fn=<NllLossBackward>) 40 0
+tensor(0.5199, grad_fn=<DivBackward0>) 45 0
+tensor(0.4699, grad_fn=<DivBackward0>) 45 0
+tensor(0.7226, grad_fn=<NllLossBackward>) 45 0
+tensor(0.8258, grad_fn=<NllLossBackward>) 45 0
+tensor(0.4043, grad_fn=<DivBackward0>) 50 0
+tensor(0.4311, grad_fn=<DivBackward0>) 50 0
+tensor(0.7019, grad_fn=<NllLossBackward>) 50 0
+tensor(0.6579, grad_fn=<NllLossBackward>) 50 0
+Accuracy_LH: 64 %
+Accuracy_MF: 56 %
+tensor(0.4070, grad_fn=<DivBackward0>) 55 0
+tensor(0.4657, grad_fn=<DivBackward0>) 55 0
+tensor(0.7469, grad_fn=<NllLossBackward>) 55 0
+tensor(0.6539, grad_fn=<NllLossBackward>) 55 0
+tensor(0.3973, grad_fn=<DivBackward0>) 60 0
+tensor(0.4140, grad_fn=<DivBackward0>) 60 0
+tensor(0.7389, grad_fn=<NllLossBackward>) 60 0
+tensor(0.6074, grad_fn=<NllLossBackward>) 60 0
+tensor(0.4606, grad_fn=<DivBackward0>) 65 0
+tensor(0.3853, grad_fn=<DivBackward0>) 65 0
+tensor(0.6986, grad_fn=<NllLossBackward>) 65 0
+tensor(0.6598, grad_fn=<NllLossBackward>) 65 0
+tensor(0.4414, grad_fn=<DivBackward0>) 70 0
+tensor(0.3861, grad_fn=<DivBackward0>) 70 0
+tensor(0.6962, grad_fn=<NllLossBackward>) 70 0
+tensor(0.7179, grad_fn=<NllLossBackward>) 70 0
+tensor(0.4253, grad_fn=<DivBackward0>) 75 0
+tensor(0.3394, grad_fn=<DivBackward0>) 75 0
+tensor(0.7357, grad_fn=<NllLossBackward>) 75 0
+tensor(0.6806, grad_fn=<NllLossBackward>) 75 0
+Accuracy_LH: 49 %
+Accuracy_MF: 63 %
+tensor(0.3657, grad_fn=<DivBackward0>) 80 0
+tensor(0.3703, grad_fn=<DivBackward0>) 80 0
+tensor(0.7007, grad_fn=<NllLossBackward>) 80 0
+tensor(0.6638, grad_fn=<NllLossBackward>) 80 0
+tensor(0.3953, grad_fn=<DivBackward0>) 85 0
+tensor(0.3320, grad_fn=<DivBackward0>) 85 0
+tensor(0.7327, grad_fn=<NllLossBackward>) 85 0
+tensor(0.6068, grad_fn=<NllLossBackward>) 85 0
+tensor(0.4219, grad_fn=<DivBackward0>) 90 0
+tensor(0.4187, grad_fn=<DivBackward0>) 90 0
+tensor(0.7240, grad_fn=<NllLossBackward>) 90 0
+tensor(0.5504, grad_fn=<NllLossBackward>) 90 0
+tensor(0.3325, grad_fn=<DivBackward0>) 95 0
+tensor(0.2858, grad_fn=<DivBackward0>) 95 0
+tensor(0.7313, grad_fn=<NllLossBackward>) 95 0
+tensor(0.6652, grad_fn=<NllLossBackward>) 95 0
+tensor(0.3475, grad_fn=<DivBackward0>) 100 0
+tensor(0.3493, grad_fn=<DivBackward0>) 100 0
+tensor(0.6764, grad_fn=<NllLossBackward>) 100 0
+tensor(0.6057, grad_fn=<NllLossBackward>) 100 0
+Accuracy_LH: 44 %
+Accuracy_MF: 57 %
+tensor(0.2911, grad_fn=<DivBackward0>) 105 0
+tensor(0.3826, grad_fn=<DivBackward0>) 105 0
+tensor(0.7403, grad_fn=<NllLossBackward>) 105 0
+tensor(0.6404, grad_fn=<NllLossBackward>) 105 0
