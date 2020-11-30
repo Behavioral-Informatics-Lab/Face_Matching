@@ -36,10 +36,10 @@ dim_LR = 128
 shape = (dim_LR, dim_LR)
 dim_HR = 128
 ip_shape = (dim_HR, dim_HR)
+epochs = 5
 batch_size = 256 # + size, + speed, - quality
 learning_rate = 1e-3
 weight_decay = .0005
-epochs = 5
 latent_size = 512 
 train_ratio = .7
 val_ratio = .3
@@ -158,6 +158,14 @@ def display_img(img, dim):
     plt.imshow(in_pic[0])
     plt.axis('off')
     plt.show()
+
+def save_img(img, dim, filename):
+    in_pic = img.data.cpu().view(-1, dim, dim)
+    plt.figure(figsize=(5, 5))
+    plt.imshow(in_pic[0])
+    plt.axis('off')
+    filepath = 'NovelApproach/img/' + filename + '.png'
+    plt.savefig(filepath)
 
 ## NETWORK ARCHITECTURES ##
 
@@ -385,8 +393,8 @@ for i, data in enumerate(train_loader):
     label1 = label[1].to(device)
 
     res1, mu1, logvar1, z1 = vae1(input1)
-    display_img(input1,dim_HR)
-    display_img(res1,dim_HR)
+    save_img(input1,dim_HR,'init_inputHR')
+    save_img(res1,dim_HR,'init_recHR')
     break
 
 ## TRAINING NETWORK ##
@@ -584,12 +592,15 @@ if (test_net==False):
 
                     res1, mu1, logvar1, z1 = vae1(input1j)
                     
-                    display_img(input1j,dim_HR)
-                    display_img(res1,dim_HR)
+                    save_img(input1j,dim_HR, (str(ep) + ', ' + str(i) + 'input'))
+                    save_img(res1,dim_HR,(str(ep) + ', ' + str(i) + 'rec'))
+
 
         # outside of inner loop
         # saves for every epoch
 
+
+        '''
         # save the checkpoint to be loaded for next use
         save_checkpoint({
             # increase the track of the current epoch #
@@ -605,6 +616,7 @@ if (test_net==False):
 
             'optimizer': net_face.state_dict(),
         })
+        '''
 
 ## TESTING MODEL ##
 
