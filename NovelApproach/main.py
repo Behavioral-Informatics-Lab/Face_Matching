@@ -37,7 +37,7 @@ shape = (dim_LR, dim_LR)
 dim_HR = 128
 ip_shape = (dim_HR, dim_HR)
 epochs = 5
-batch_size = 256 # + size, + speed, - quality
+batch_size = 100 # + size, + speed, - quality
 learning_rate = 1e-3
 weight_decay = .0005
 latent_size = 512 
@@ -79,9 +79,9 @@ class get_transformed_celeba(Dataset):
             image1 = (torch.Tensor.permute(image1, (2, 0, 1)))
             image1 = image1/256.0
             annot = 0
-            gender = col['Male'].values[0]
-            pale = col['Pale_Skin'].values[0]
-            young = col['Young'].values[0]
+            # gender = col['Male'].values[0]
+            # pale = col['Pale_Skin'].values[0]
+            # young = col['Young'].values[0]
 
         else:
             image2 = image1
@@ -93,14 +93,13 @@ class get_transformed_celeba(Dataset):
             image1 = (torch.Tensor.permute(image1, (2, 0, 1)))
             image1 = image1/256.0
             annot = 1
-            gender = col['Male'].values[0]
-            pale = col['Pale_Skin'].values[0]
-            young = col['Young'].values[0]
+            # gender = col['Male'].values[0]
+            # pale = col['Pale_Skin'].values[0]
+            # young = col['Young'].values[0]
 
         # annot = annot.astype('float').reshape(-1,2)
         sample = {'image1': image1, 'image2': image2,
-                  'same': annot, 'gender': gender,
-                  'pale': pale, 'young': young}
+                  'same': annot} # 'gender': gender, 'pale': pale, 'young': young}
         return sample
 
 
@@ -137,20 +136,20 @@ test_loader = DataLoader(dataset, batch_size=batch_size,
 
 # DISPLAY IMAGES FROM DATASET #
 
-'''
-len_attrib = len(cele_attrib)
-# Select random images form celeba dataset
-rnd_set = np.random.permutation(len_attrib)[0:5] # 5 images
-for i in rnd_set:
-     idx = ("{:06d}.jpg".format(i))
-     img_path = images_path+idx
-     img = plt.imread(img_path)
-     print(idx)
-     print(cele_attrib['ImgId'][i-1])  
-     print(cele_attrib['Male'][i-1]) # i-1 because indexing starts at 0
-     plt.imshow(img)   
-     plt.show()
-'''
+
+def display_img_png(num_of_img):
+    # Select random images form celeba dataset
+    rnd_set = np.random.permutation(len(cele_attrib))[0:num_of_img] # 5 images
+    for i in rnd_set:
+        idx = ("{:06d}.jpg".format(i))
+        img_path = images_path+idx
+        img = plt.imread(img_path)
+        print(idx)
+        print(cele_attrib['ImgId'][i-1])  
+        print(cele_attrib['Male'][i-1]) # i-1 because indexing starts at 0
+        plt.imshow(img)   
+        plt.show()
+
 
 def display_img(img, dim):
     in_pic = img.data.cpu().view(-1, dim, dim)
@@ -173,7 +172,7 @@ class VAE(nn.Module):
     def __init__(self, nc, ngf, ndf, latent_variable_size):
         super(VAE, self).__init__()
 
-        self.nc = nc # numbrt of channels 
+        self.nc = nc # nc = number of channels(3)
         self.ngf = ngf # ndf = number of filters in the discriminator
         self.ndf = ndf # ngf = number of filters in the generator
         self.latent_variable_size = latent_variable_size # size of latent variable
@@ -343,21 +342,21 @@ else:
     vae2 = VAE(nc=3, ngf=dim_LR, ndf=dim_LR,
                latent_variable_size=latent_size).to(device)
     net_face = Net_Attr().to(device)
-    net_gender = Net_Attr().to(device)
-    net_pale = Net_Attr().to(device)
-    net_young = Net_Attr().to(device)
+    # net_gender = Net_Attr().to(device)
+    # net_pale = Net_Attr().to(device)
+    # net_young = Net_Attr().to(device)
 
     # OPTIMIZERS
     optimizer1 = optim.Adam(vae1.parameters(), lr=learning_rate, weight_decay=weight_decay)
     optimizer2 = optim.Adam(vae2.parameters(), lr=learning_rate, weight_decay=weight_decay)
     optimizerface = optim.Adam(
         net_face.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    optimizergender = optim.Adam(
-        net_gender.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    optimizerpale = optim.Adam(
-        net_pale.parameters(), lr=learning_rate, weight_decay=weight_decay)
-    optimizeryoung = optim.Adam(
-        net_young.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    # optimizergender = optim.Adam(
+    #     net_gender.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    # optimizerpale = optim.Adam(
+    #     net_pale.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    # optimizeryoung = optim.Adam(
+    #     net_young.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
     checkpoint = {'epoch': 0}
 '''
@@ -379,23 +378,11 @@ def loss_function(recon_x, x, mu, logvar):
 
     # # https://arxiv.org/abs/1312.6114 (Appendix B)
     # # 0.5 * sum(1 + log(sigma^2) - mu^2 - sigma^2)
-    # KLD_element = mu.pow(2).add_(logvar.exp()).mul_(-1).add_(1).add_(logvar) # original
-    # KLD = torch.sum(KLD_element).mul_(-0.5) # original
-    KLD = 0.5 * torch.sum(logvar.exp() - logvar - 1 + mu.pow(2)) # modified
+    KLD_element = mu.pow(2).add_(logvar.exp()).mul_(-1).add_(1).add_(logvar) # original
+    KLD = torch.sum(KLD_element).mul_(-0.5) # original
+    # KLD = 0.5 * torch.sum(logvar.exp() - logvar - 1 + mu.pow(2)) # modified
     return (BCE + KLD)
     # return (BCE + KLD)/10000 # 10,000 has been added; must verify????????
-
-## DELETE LATER
-
-for i, data in enumerate(train_loader):
-    input1, input2, label, gender, pale, young = data.items()
-    input1, input2 = input1[1].to(device), input2[1].to(device)
-    label1 = label[1].to(device)
-
-    res1, mu1, logvar1, z1 = vae1(input1)
-    save_img(input1,dim_HR,'init_inputHR')
-    save_img(res1,dim_HR,'init_recHR')
-    break
 
 ## TRAINING NETWORK ##
 
@@ -420,9 +407,9 @@ if (test_net==False):
     # minimization criterion of face matching NN
     criterionface = nn.CrossEntropyLoss()
     # maximization criterion of matching NN
-    criteriongender = nn.CrossEntropyLoss()
-    criterionpale = nn.CrossEntropyLoss()
-    criterionyoung = nn.CrossEntropyLoss()
+    # criteriongender = nn.CrossEntropyLoss()
+    # criterionpale = nn.CrossEntropyLoss()
+    # criterionyoung = nn.CrossEntropyLoss()
 
     
     # run for X epochs
@@ -435,15 +422,16 @@ if (test_net==False):
             # input2 = low res 50% same image
             # label = name corresponding to true image path
             # gender, where male == 1
-            input1, input2, label, gender, pale, young = data.items()
+            # input1, input2, label, gender, pale, young = data.items()
+            input1, input2, label = data.items()
             input1, input2 = input1[1].to(device), input2[1].to(device)
             label1 = label[1].to(device)
-            gender = gender[1].to(device)
-            gender = (gender+1)//2
-            pale = pale[1].to(device)
-            pale = (pale+1)//2
-            young = young[1].to(device)
-            young = (young+1)//2
+            # gender = gender[1].to(device)
+            # gender = (gender+1)//2
+            # pale = pale[1].to(device)
+            # pale = (pale+1)//2
+            # young = young[1].to(device)
+            # young = (young+1)//2
             
             # ===================forward=====================
 
@@ -457,6 +445,12 @@ if (test_net==False):
 
             # =====================loss=======================
 
+            lossface = criterionface(net_face(z), label1)
+
+            reconstruct1loss = loss_function(res1, input1, mu1, logvar1)
+            reconstruct2loss = loss_function(res2, input2, mu2, logvar2)
+
+            '''
             # feature loss
             lossface = criterionface(net_face(z), label1)
             lossgender = criteriongender(net_gender(z), gender)
@@ -472,6 +466,7 @@ if (test_net==False):
             reconstruct2loss = loss_function(res2, input2, mu2, logvar2)
             encoder1loss = reconstruct1loss + lossfeatures
             encoder2loss = reconstruct2loss + lossfeatures
+            '''
 
             # ===================backward====================
 
@@ -479,22 +474,22 @@ if (test_net==False):
             optimizer1.zero_grad()
             optimizer2.zero_grad()
             optimizerface.zero_grad()
-            optimizergender.zero_grad()
-            optimizerpale.zero_grad()
-            optimizeryoung.zero_grad()
+            # optimizergender.zero_grad()
+            # optimizerpale.zero_grad()
+            # optimizeryoung.zero_grad()
 
             # feature-based
             lossface.backward(retain_graph=True)
             optimizerface.step()
 
-            lossgender.backward(retain_graph=True)
-            optimizergender.step()
+            # lossgender.backward(retain_graph=True)
+            # optimizergender.step()
 
-            losspale.backward(retain_graph=True)
-            optimizerpale.step()
+            # losspale.backward(retain_graph=True)
+            # optimizerpale.step()
 
-            lossyoung.backward(retain_graph=True)
-            optimizeryoung.step()
+            # lossyoung.backward(retain_graph=True)
+            # optimizeryoung.step()
 
             # encoder1loss.backward(retain_graph=True)
             reconstruct1loss.backward(retain_graph=True)
@@ -510,16 +505,17 @@ if (test_net==False):
             err_rcnstrctn1.append(reconstruct1loss.item())
             err_rcnstrctn1.append(reconstruct2loss.item())
             err_same.append(lossface.item())
-            err_gender.append(lossgender.item())
-            err_pale.append(losspale.item())
-            err_young.append(lossyoung.item())
+            # err_gender.append(lossgender.item())
+            # err_pale.append(losspale.item())
+            # err_young.append(lossyoung.item())
 
             # if 5th iteration, print the loss, iteration #, and epoch for each of the NN
-            if (i % 5 == 0):
+            if (i % 1 == 0):
                 print(i, ep)
                 print(reconstruct1loss,reconstruct2loss)
-                print(lossface, lossgender, losspale, lossyoung)
-                print(encoder1loss,encoder2loss)
+                print(lossface)
+                # print(lossface, lossgender, losspale, lossyoung)
+                # print(encoder1loss,encoder2loss)
                 #print (output[1])
 
             # if 50th iteration, check accuracy of model
@@ -542,51 +538,49 @@ if (test_net==False):
                 correctyoung = 0
                 # literally just going through and checking if the model predicts the true value (same face / which gender) correctly
                 for j, dataj in enumerate(val_dataloader):
-                    input1j, input2j, labelj, gender, pale, young = dataj.items()
+                    # input1j, input2j, labelj, gender, pale, young = dataj.items()
+                    input1j, input2j, labelj = dataj.items()
                     input1j, input2j = input1j[1].to(
                         device), input2j[1].to(device)
 
                     labelj = labelj[1].to(device)
-                    gender = gender[1].to(device)
-                    gender = (gender+1)//2
-                    pale = pale[1].to(device)
-                    pale = (pale+1)//2
-                    young = young[1].to(device)
-                    young = (young+1)//2
+                    # gender = gender[1].to(device)
+                    # gender = (gender+1)//2
+                    # pale = pale[1].to(device)
+                    # pale = (pale+1)//2
+                    # young = young[1].to(device)
+                    # young = (young+1)//2
 
                     res1, mu1, logvar1, z1 = vae1(input1j)
                     res2, mu2, logvar2, z2 = vae2(input2j)
 
-                    # DISPLAY IMAGES (COMMENT OUT LATER!!!!)
-                    display_img(input1j,dim_HR)
-                    display_img(res1,dim_HR)
-
                     _, predictedface = torch.max(net_face(z).data, 1)
-                    _, predictedgender = torch.max(net_gender(z).data, 1)
-                    _, predictedpale = torch.max(net_pale(z).data, 1)
-                    _, predictedyoung = torch.max(net_young(z).data, 1)
+                    # _, predictedgender = torch.max(net_gender(z).data, 1)
+                    # _, predictedpale = torch.max(net_pale(z).data, 1)
+                    # _, predictedyoung = torch.max(net_young(z).data, 1)
 
                     total += labelj.size(0)
                     correctface += (predictedface == labelj).sum().item()
-                    correctgender += (predictedgender == gender).sum().item()
-                    correctpale += (predictedpale == pale).sum().item()
-                    correctyoung += (predictedyoung == young).sum().item()
+                    # correctgender += (predictedgender == gender).sum().item()
+                    # correctpale += (predictedpale == pale).sum().item()
+                    # correctyoung += (predictedyoung == young).sum().item()
                 # prints out percent accurate for both NN
                 print('Same Face Accuracy: %d %%' % (100*correctface/total))
-                print('Gender Male Accuracy: %d %%' % (100*correctgender/total))
-                print('Pale Skin Accuracy: %d %%' % (100*correctpale/total))
-                print('Young Age Accuracy: %d %%' % (100*correctyoung/total))
+                # print('Gender Male Accuracy: %d %%' % (100*correctgender/total))
+                # print('Pale Skin Accuracy: %d %%' % (100*correctpale/total))
+                # print('Young Age Accuracy: %d %%' % (100*correctyoung/total))
 
                 # record the percent accurate for both NN into respective lists
                 acc_face.append(100*correctface/total)  # low high
-                acc_gender.append(100*correctgender/total)  # male female
-                acc_pale.append(100*correctpale/total)  
-                acc_young.append(100*correctyoung/total)  
+                # acc_gender.append(100*correctgender/total)  # male female
+                # acc_pale.append(100*correctpale/total)  
+                # acc_young.append(100*correctyoung/total)  
 
             # DISPLAY IMAGES (COMMENT OUT LATER!!!!)
             if (i % 50 == 0):
                 for j, dataj in enumerate(val_dataloader):
-                    input1j, input2j, labelj, gender, pale, young = dataj.items()
+                    # input1j, input2j, labelj, gender, pale, young = dataj.items()
+                    input1j, input2j, labelj = dataj.items()
                     input1j = input1j[1].to(device)
                     labelj = labelj[1].to(device)
 
