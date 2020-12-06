@@ -32,7 +32,7 @@ test_net = False
 use_cuda = torch.cuda.is_available()  # use_cuda = False
 device = torch.device("cuda" if use_cuda else "cpu")
 torch.autograd.set_detect_anomaly(True) # debugging tool
-dim_LR = 128
+dim_LR = 12
 shape = (dim_LR, dim_LR)
 dim_HR = 128
 ip_shape = (dim_HR, dim_HR)
