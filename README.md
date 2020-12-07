@@ -26,6 +26,7 @@ Additional data sets can be found on [Kaggle](https://www.kaggle.com/c/deepfake-
 - [Joint Feature and Similarity Deep Learning for Vehicle Re-identification](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=8424333)
 
 ## Resources
+- [Deep Feature Consistent Variational Autoencoder](https://houxianxu.github.io/assets/project/dfcvae)
 - [Variational Fair Autoencoder](https://github.com/dendisuhubdy/vfae/blob/master/vfae.py)
 - [A Cloud-guided Feature Extraction Approach for Image Retrieval in Mobile Edge Computing](https://ieeexplore.ieee.org/document/8851250)
 - [HyperFace: A Deep Multi-task Learning Framework for Face Detection, Landmark Localization, Pose Estimation, and Gender Recognition](https://mail.google.com/mail/u/1/#search/jka59%40scarletmail.rutgers.edu/FMfcgxwKjKqxQGstpSCQttXlsGMFDfDx?projector=1&messagePartId=0.1)
