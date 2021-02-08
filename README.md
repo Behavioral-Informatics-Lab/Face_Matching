@@ -24,14 +24,26 @@ Additional data sets can be found on [Kaggle](https://www.kaggle.com/c/deepfake-
 
 ## Related Works
 - [Joint Feature and Similarity Deep Learning for Vehicle Re-identification](https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=8424333)
-
-## Resources
-- [Deep Feature Consistent Variational Autoencoder](https://houxianxu.github.io/assets/project/dfcvae)
 - [Variational Fair Autoencoder](https://github.com/dendisuhubdy/vfae/blob/master/vfae.py)
 - [A Cloud-guided Feature Extraction Approach for Image Retrieval in Mobile Edge Computing](https://ieeexplore.ieee.org/document/8851250)
 - [HyperFace: A Deep Multi-task Learning Framework for Face Detection, Landmark Localization, Pose Estimation, and Gender Recognition](https://mail.google.com/mail/u/1/#search/jka59%40scarletmail.rutgers.edu/FMfcgxwKjKqxQGstpSCQttXlsGMFDfDx?projector=1&messagePartId=0.1)
+- [Deep Feature Consistent Variational Autoencoder](https://houxianxu.github.io/assets/project/dfcvae)
+
+## Coding Resources
 - [Pytorch VAE Git Repo](https://github.com/AntixK/PyTorch-VAE)
 - [Theanos VFAE Git Repo](https://github.com/NCTUMLlab/Huang-Ching-Wei/tree/master/Model)
+
+## Amarel Resources
+- [Bala's Intro to Amarel Video](https://ru-stream.rutgers.edu/media/Intro+to+the+Amarel+Cluster+-+OARC+Workshop/1_2xsi7647)
+- [Kaltura Videos](https://rutgers.mediaspace.kaltura.com/channel/OARC-Weekly-Open-Workshop/171647611)
+- [OnDemand](https://ondemand.hpc.rutgers.edu/pun/sys/dashboard)
+- [OARC](https://oarc.rutgers.edu/resources/amarel/)
+- [User Guide](https://sites.google.com/view/cluster-user-guide/amarel)
+- Add the following to SLURM tTo use GPUs:
+```
+#SBATCH --gres=gpus:1
+#SBATCH -partition=gpu
+```
 
 ## Repo Use Instructions
 - To clone the repo, enter below snippet into your command line 
