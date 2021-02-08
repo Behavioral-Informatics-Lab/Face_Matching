@@ -39,7 +39,7 @@ Additional data sets can be found on [Kaggle](https://www.kaggle.com/c/deepfake-
 - [OnDemand](https://ondemand.hpc.rutgers.edu/pun/sys/dashboard)
 - [OARC](https://oarc.rutgers.edu/resources/amarel/)
 - [User Guide](https://sites.google.com/view/cluster-user-guide/amarel)
-- Add the following to SLURM tTo use GPUs:
+- Add the following to SLURM to use GPUs:
 ```
 #SBATCH --gres=gpus:1
 #SBATCH -partition=gpu
